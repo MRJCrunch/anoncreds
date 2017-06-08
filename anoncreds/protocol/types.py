@@ -1,9 +1,9 @@
 import os
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 from typing import TypeVar, Sequence, Dict, Set
 
 from anoncreds.protocol.utils import toDictWithStrValues, \
-    fromDictWithStrValues, deserializeFromStr, encodeAttr, crypto_int_to_str
+    fromDictWithStrValues, deserializeFromStr, encodeAttr, crypto_int_to_str, strToCryptoInteger
 from config.config import cmod
 
 
@@ -207,6 +207,20 @@ class PublicKey(namedtuple('PublicKey', 'N, Rms, Rctxt, R, S, Z, seqId'),
             public_key['r'][key] = str(crypto_int_to_str(self.R[key]))
 
         return public_key
+
+    @classmethod
+    def from_str_dict(cls, data):
+        N = strToCryptoInteger(data['n'])
+        Rms = strToCryptoInteger(data['rms'] + 'mod' + data['n'])
+        Rctxt = strToCryptoInteger(data['rctxt'] + 'mod' + data['n'])
+        S = strToCryptoInteger(data['s'] + 'mod' + data['n'])
+        Z = strToCryptoInteger(data['z'] + 'mod' + data['n'])
+        R = OrderedDict()
+
+        for key in data['r']:
+            R[key] = strToCryptoInteger(data['r'][key] + 'mod' + data['n'])
+
+        return cls(N, Rms, Rctxt, R, S, Z)
 
 
 class SecretKey(namedtuple('SecretKey', 'pPrime, qPrime'),
