@@ -195,16 +195,16 @@ class PublicKey(namedtuple('PublicKey', 'N, Rms, Rctxt, R, S, Z, seqId'),
 
     def to_str_dict(self):
         public_key = {
-            'n': crypto_int_to_str(self.N),
-            's': crypto_int_to_str(self.S),
-            'rms': crypto_int_to_str(self.Rms),
-            'rctxt': crypto_int_to_str(self.Rctxt),
-            'z': crypto_int_to_str(self.Z),
+            'n': str(crypto_int_to_str(self.N)),
+            's': str(crypto_int_to_str(self.S)),
+            'rms': str(crypto_int_to_str(self.Rms)),
+            'rctxt': str(crypto_int_to_str(self.Rctxt)),
+            'z': str(crypto_int_to_str(self.Z)),
             'r': {}
         }
 
         for key in self.R:
-            public_key['r'][key] = crypto_int_to_str(self.R[key])
+            public_key['r'][key] = str(crypto_int_to_str(self.R[key]))
 
         return public_key
 
