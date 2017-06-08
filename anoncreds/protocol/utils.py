@@ -244,6 +244,9 @@ def strToCryptoInteger(n):
         return cmod.integer(int(n))
 
 
+def crypto_int_to_str(n):
+    return cmod.toInt(n)
+
 def strToInt(s):
     return bytes_to_int(sha256(s.encode()).digest())
 
