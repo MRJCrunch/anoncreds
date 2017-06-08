@@ -3,7 +3,7 @@ from collections import namedtuple
 from typing import TypeVar, Sequence, Dict, Set
 
 from anoncreds.protocol.utils import toDictWithStrValues, \
-    fromDictWithStrValues, deserializeFromStr, encodeAttr
+    fromDictWithStrValues, deserializeFromStr, encodeAttr, crypto_int_to_str
 from config.config import cmod
 
 
@@ -192,6 +192,21 @@ class PublicKey(namedtuple('PublicKey', 'N, Rms, Rctxt, R, S, Z, seqId'),
                and self.Rctxt == other.Rctxt and self.S == other.S \
                and self.Z == other.Z and self.seqId == other.seqId \
                and dict(self.R) == dict(other.R)
+
+    def to_str_dict(self):
+        public_key = {
+            'n': crypto_int_to_str(self.N),
+            's': crypto_int_to_str(self.S),
+            'rms': crypto_int_to_str(self.Rms),
+            'rctxt': crypto_int_to_str(self.Rctxt),
+            'z': crypto_int_to_str(self.Z),
+            'r': {}
+        }
+
+        for key in self.R:
+            public_key['r'][key] = crypto_int_to_str(self.R[key])
+
+        return public_key
 
 
 class SecretKey(namedtuple('SecretKey', 'pPrime, qPrime'),
