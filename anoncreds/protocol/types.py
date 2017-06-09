@@ -1,5 +1,5 @@
 import os
-from collections import namedtuple, OrderedDict
+from collections import namedtuple
 from typing import TypeVar, Sequence, Dict, Set
 
 from anoncreds.protocol.utils import toDictWithStrValues, \
@@ -182,8 +182,7 @@ class Schema(namedtuple('Schema',
         return SchemaKey(self.name, self.version, self.issuerId)
 
 
-class PublicKey(namedtuple('PublicKey', 'N, Rms, Rctxt, R, S, Z, seqId'),
-                NamedTupleStrSerializer):
+class PublicKey(namedtuple('PublicKey', 'N, Rms, Rctxt, R, S, Z, seqId')):
     def __new__(cls, N, Rms, Rctxt, R, S, Z, seqId=None):
         return super(PublicKey, cls).__new__(cls, N, Rms, Rctxt, R, S, Z, seqId)
 
@@ -215,7 +214,7 @@ class PublicKey(namedtuple('PublicKey', 'N, Rms, Rctxt, R, S, Z, seqId'),
         Rctxt = strToCryptoInteger(data['rctxt'] + 'mod' + data['n'])
         S = strToCryptoInteger(data['s'] + 'mod' + data['n'])
         Z = strToCryptoInteger(data['z'] + 'mod' + data['n'])
-        R = OrderedDict()
+        R = {}
 
         for key in data['r']:
             R[key] = strToCryptoInteger(data['r'][key] + 'mod' + data['n'])
