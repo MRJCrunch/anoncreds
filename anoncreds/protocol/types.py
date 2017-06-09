@@ -182,7 +182,8 @@ class Schema(namedtuple('Schema',
         return SchemaKey(self.name, self.version, self.issuerId)
 
 
-class PublicKey(namedtuple('PublicKey', 'N, Rms, Rctxt, R, S, Z, seqId')):
+class PublicKey(namedtuple('PublicKey', 'N, Rms, Rctxt, R, S, Z, seqId'),
+                NamedTupleStrSerializer):
     def __new__(cls, N, Rms, Rctxt, R, S, Z, seqId=None):
         return super(PublicKey, cls).__new__(cls, N, Rms, Rctxt, R, S, Z, seqId)
 
