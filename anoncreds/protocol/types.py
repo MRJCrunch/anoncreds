@@ -295,6 +295,19 @@ class ClaimRequest(namedtuple('ClaimRequest', 'userId, U, Ur'),
     def __new__(cls, userId, U, Ur=None):
         return super(ClaimRequest, cls).__new__(cls, userId, U, Ur)
 
+    def to_str_dict(self):
+        return {
+            'prover_did': str(self.userId),
+            'u': str(crypto_int_to_str(self.U)),
+            'ur': self.Ur
+        }
+
+    @classmethod
+    def from_str_dict(cls, data, n):
+        u = strToCryptoInteger(data['u'] + 'mod' + str(n))
+
+        return cls(userId=data['prover_did'], U=u, Ur=data['ur'])
+
 
 # Accumulator = namedtuple('Accumulator', ['iA', 'acc', 'V', 'L'])
 
