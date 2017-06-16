@@ -3,7 +3,7 @@ from collections import namedtuple
 from typing import TypeVar, Sequence, Dict, Set
 
 from anoncreds.protocol.utils import toDictWithStrValues, \
-    fromDictWithStrValues, deserializeFromStr, encodeAttr, crypto_int_to_str, strToCryptoInteger
+    fromDictWithStrValues, deserializeFromStr, encodeAttr, crypto_int_to_str, to_crypto_int
 from config.config import cmod
 
 
@@ -210,15 +210,15 @@ class PublicKey(namedtuple('PublicKey', 'N, Rms, Rctxt, R, S, Z, seqId'),
 
     @classmethod
     def from_str_dict(cls, data):
-        N = strToCryptoInteger(data['n'])
-        Rms = strToCryptoInteger(data['rms'] + 'mod' + data['n'])
-        Rctxt = strToCryptoInteger(data['rctxt'] + 'mod' + data['n'])
-        S = strToCryptoInteger(data['s'] + 'mod' + data['n'])
-        Z = strToCryptoInteger(data['z'] + 'mod' + data['n'])
+        N = to_crypto_int(data['n'])
+        Rms = to_crypto_int(data['rms'], data['n'])
+        Rctxt = to_crypto_int(data['rctxt'], data['n'])
+        S = to_crypto_int(data['s'], data['n'])
+        Z = to_crypto_int(data['z'], data['n'])
         R = {}
 
         for key in data['r']:
-            R[key] = strToCryptoInteger(data['r'][key] + 'mod' + data['n'])
+            R[key] = to_crypto_int(data['r'][key], data['n'])
 
         return cls(N, Rms, Rctxt, R, S, Z)
 
@@ -304,7 +304,7 @@ class ClaimRequest(namedtuple('ClaimRequest', 'userId, U, Ur'),
 
     @classmethod
     def from_str_dict(cls, data, n):
-        u = strToCryptoInteger(data['u'] + 'mod' + str(n))
+        u = to_crypto_int(data['u'], str(n))
 
         return cls(userId=data['prover_did'], U=u, Ur=data['ur'])
 

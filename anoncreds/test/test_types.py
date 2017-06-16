@@ -57,6 +57,22 @@ def test_pk_from_to_dict():
     assert pk == PublicKey.from_str_dict(pk_serialized)
 
 
+def test_claim_request_from_to_dict():
+    n = cmod.integer(12345)
+    u = cmod.integer(12) % n
+    prover_did = '123456789'
+    claim_request = ClaimRequest(userId=prover_did, U=u, Ur=None)
+
+    claim_request_serialized = {
+        'prover_did': '123456789',
+        'u': '12',
+        'ur': None
+    }
+
+    assert claim_request.to_str_dict() == claim_request_serialized
+    assert claim_request == ClaimRequest.from_str_dict(claim_request_serialized, n)
+
+
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
 def testRequestClaimsFromToDict(claimsRequestProver1Gvt):
     assert claimsRequestProver1Gvt == ClaimRequest.fromStrDict(
