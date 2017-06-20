@@ -120,13 +120,16 @@ class Issuer:
         # TODO this has un-obvious side-effects
         await self._genContxt(schemaId, iA, claimRequest.userId)
 
-        c1 = await self._issuePrimaryClaim(schemaId, attributes,
+        (c1, claim) = await self._issuePrimaryClaim(schemaId, attributes,
                                            claimRequest.U)
         # TODO re-enable when revocation registry is fully implemented
         c2 = await self._issueNonRevocationClaim(schemaId, claimRequest.Ur,
                                                  iA,
                                                  i) if claimRequest.Ur else None
-        return Claims(primaryClaim=c1, nonRevocClaim=c2)
+
+        signature = Claims(primaryClaim=c1, nonRevocClaim=c2)
+
+        return (signature, claim)
 
     async def issueClaims(self, allClaimRequest: Dict[ID, ClaimRequest]) -> \
             Dict[ID, Claims]:

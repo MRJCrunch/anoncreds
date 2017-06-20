@@ -72,7 +72,7 @@ class Prover:
                                                           reqNonRevoc)
         return res
 
-    async def processClaim(self, schemaId: ID, claims: Claims):
+    async def processClaim(self, schemaId: ID, claims: Dict[str, Sequence[str]], signature: Claims):
         """
         Processes and saves a received Claim for the given Schema.
 
@@ -80,10 +80,12 @@ class Prover:
         definition schema)
         :param claims: claims to be processed and saved
         """
-        await self.wallet.submitContextAttr(schemaId, claims.primaryClaim.m2)
-        await self._initPrimaryClaim(schemaId, claims.primaryClaim)
-        if claims.nonRevocClaim:
-            await self._initNonRevocationClaim(schemaId, claims.nonRevocClaim)
+        await self.wallet.submitContextAttr(schemaId, signature.primaryClaim.m2)
+        await self.wallet.submitClaims(schemaId, claims)
+
+        await self._initPrimaryClaim(schemaId, signature.primaryClaim)
+        if signature.nonRevocClaim:
+            await self._initNonRevocationClaim(schemaId, signature.nonRevocClaim)
 
     async def processClaims(self, allClaims: Dict[ID, Claims]):
         """

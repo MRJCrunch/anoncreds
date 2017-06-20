@@ -312,7 +312,7 @@ class ClaimRequest(namedtuple('ClaimRequest', 'userId, U, Ur'),
 # Accumulator = namedtuple('Accumulator', ['iA', 'acc', 'V', 'L'])
 
 class PrimaryClaim(
-    namedtuple('PrimaryClaim', 'attrs, encodedAttrs, m2, A, e, v'),
+    namedtuple('PrimaryClaim', 'm2, A, e, v'),
     NamedTupleStrSerializer):
     pass
 
@@ -322,6 +322,23 @@ class PrimaryClaim(
             rtn.append('    {}: {}'.format(str(key), str(value)))
 
         return os.linesep.join(rtn)
+
+    def to_str_dict(self):
+        return {
+            'm2': str(crypto_int_to_str(self.m2)),
+            'a': str(crypto_int_to_str(self.A)),
+            'e': str(crypto_int_to_str(self.e)),
+            'v': str(crypto_int_to_str(self.v))
+        }
+
+    @classmethod
+    def from_str_dict(cls, data, n):
+        m2 = to_crypto_int(data['m2'], str(n))
+        a = to_crypto_int(data['a'], str(n))
+        e = to_crypto_int(data['e'], str(n))
+        v = to_crypto_int(data['v'], str(n))
+
+        return cls(m2=m2, A=a, e=e, v=v)
 
 
 class Witness(namedtuple('Witness', 'sigmai, ui, gi, omega, V'),
