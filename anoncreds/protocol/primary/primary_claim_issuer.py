@@ -91,10 +91,10 @@ class PrimaryClaimIssuer:
         A = await self._sign(schemaId, encodedAttrs, vprimeprime, u, e)
 
         m2 = await self._wallet.getContextAttr(schemaId)
-        attrs = attributes._vals
+        attrs = dict()
 
         for key in attributes.keys():
-            attrs[key] = (str(attrs[key]), str(encodedAttrs[key]))
+            attrs[key] = (str(attributes._vals[key]), str(encodedAttrs[key]))
 
         return (PrimaryClaim(m2, A, e, vprimeprime), attrs)
 

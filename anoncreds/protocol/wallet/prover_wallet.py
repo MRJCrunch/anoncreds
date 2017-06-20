@@ -123,6 +123,9 @@ class ProverWalletInMemory(ProverWallet, WalletInMemory):
     async def getMasterSecret(self, schemaId: ID):
         return await self._getValueForId(self._m1s, schemaId)
 
+    async def getClaim(self, schemaId: ID):
+        return await self._getValueForId(self._claims, schemaId)
+
     async def getClaims(self, schemaId: ID) -> Claims:
         c1 = await self._getValueForId(self._c1s, schemaId)
         c2 = None if not self._c2s else await self._getValueForId(self._c2s,

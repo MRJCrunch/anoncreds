@@ -47,12 +47,12 @@ async def testSingleIssuerSingleProver(primes1):
     proofInput = ProofInput(
         ['name'],
         [PredicateGE('age', 18)])
-    #
-    # verifier = Verifier(WalletInMemory('verifier1', publicRepo))
-    # nonce = verifier.generateNonce()
-    # proof, revealedAttrs = await prover.presentProof(proofInput, nonce)
-    # assert revealedAttrs['name'] == 'Alex'
-    # assert await verifier.verify(proofInput, proof, revealedAttrs, nonce)
+
+    verifier = Verifier(WalletInMemory('verifier1', publicRepo))
+    nonce = verifier.generateNonce()
+    proof, revealedAttrs = await prover.presentProof(proofInput, nonce)
+    assert revealedAttrs['name'] == 'Alex'
+    assert await verifier.verify(proofInput, proof, revealedAttrs, nonce)
 
 
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
@@ -90,10 +90,10 @@ async def testMultiplIssuersSingleProver(primes1, primes2):
     prover = Prover(ProverWalletInMemory(userId, publicRepo))
     claimsReq1 = await prover.createClaimRequest(schemaId1)
     claimsReq2 = await prover.createClaimRequest(schemaId2)
-    claims1 = await issuer1.issueClaim(schemaId1, claimsReq1)
-    claims2 = await issuer2.issueClaim(schemaId2, claimsReq2)
-    await prover.processClaim(schemaId1, claims1)
-    await prover.processClaim(schemaId2, claims2)
+    (signature1, claims1) = await issuer1.issueClaim(schemaId1, claimsReq1)
+    (signature2, claims2) = await issuer2.issueClaim(schemaId2, claimsReq2)
+    await prover.processClaim(schemaId1, claims1, signature1)
+    await prover.processClaim(schemaId2, claims2, signature2)
 
     # 6. proof Claims
     proofInput = ProofInput(['name', 'status'],
@@ -141,8 +141,8 @@ async def testSingleIssuerMultipleCredDefsSingleProver(primes1, primes2):
     # 5. request Claims
     prover = Prover(ProverWalletInMemory(userId, publicRepo))
     claimsReqs = await prover.createClaimRequests([schemaId1, schemaId2])
-    claims = await issuer.issueClaims(claimsReqs)
-    await prover.processClaims(claims)
+    (signature, claims) = await issuer.issueClaims(claimsReqs)
+    await prover.processClaims(claims, signature)
 
     # 6. proof Claims
     proofInput = ProofInput(
@@ -182,8 +182,8 @@ async def testSingleIssuerSingleProverPrimaryOnly(primes1):
     # 5. request Claims
     prover = Prover(ProverWalletInMemory(userId, publicRepo))
     claimsReq = await prover.createClaimRequest(schemaId, None, False)
-    claims = await issuer.issueClaim(schemaId, claimsReq)
-    await prover.processClaim(schemaId, claims)
+    (signature, claims) = await issuer.issueClaim(schemaId, claimsReq)
+    await prover.processClaim(schemaId, claims, signature)
 
     # 6. proof Claims
     proofInput = ProofInput(
