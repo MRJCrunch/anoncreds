@@ -384,7 +384,7 @@ class Claims(namedtuple('Claims', 'primaryClaim, nonRevocClaim'),
     def from_str_dict(cls, data, n):
         primary = PrimaryClaim.from_str_dict(data['primaryClaim'], n)
         nonRevoc = None
-        if 'nonRevocClaim' in data:
+        if 'nonRevocClaim' in data and data['nonRevocClaim']:
             nonRevoc = NonRevocationClaim.fromStrDict(data['nonRevocClaim'])
 
         return cls(primaryClaim=primary, nonRevocClaim=nonRevoc)
