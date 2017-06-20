@@ -5,6 +5,7 @@ from typing import TypeVar, Sequence, Dict, Set
 from anoncreds.protocol.utils import toDictWithStrValues, \
     fromDictWithStrValues, deserializeFromStr, encodeAttr, crypto_int_to_str, to_crypto_int
 from config.config import cmod
+from anoncreds.protocol.globals import LARGE_MASTER_SECRET
 
 
 class AttribType:
@@ -333,7 +334,7 @@ class PrimaryClaim(
 
     @classmethod
     def from_str_dict(cls, data, n):
-        m2 = to_crypto_int(data['m2'], str(n))
+        m2 = to_crypto_int(data['m2'], str(2 ** LARGE_MASTER_SECRET))
         a = to_crypto_int(data['a'], str(n))
         e = int(data['e'])
         v = int(data['v'])
