@@ -327,8 +327,8 @@ class PrimaryClaim(
         return {
             'm2': str(crypto_int_to_str(self.m2)),
             'a': str(crypto_int_to_str(self.A)),
-            'e': str(crypto_int_to_str(self.e)),
-            'v': str(crypto_int_to_str(self.v))
+            'e': str(self.e),
+            'v': str(self.v)
         }
 
     @classmethod
