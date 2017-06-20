@@ -99,17 +99,18 @@ class Prover:
             res.append(await self.processClaim(schemaId, claims))
         return res
 
-    async def presentProof(self, proofInput: ProofInput) -> (
+    async def presentProof(self, proofInput: ProofInput, nonce) -> (
             FullProof, Dict[str, Any]):
         """
         Presents a proof to the verifier.
 
         :param proofInput: description of a proof to be presented (revealed
         attributes, predicates, timestamps for non-revocation)
+        :param nonce: verifier's nonce
         :return: a proof (both primary and non-revocation) and revealed attributes (initial non-encoded values)
         """
         claims, revealedAttrsWithValues = await self._findClaims(proofInput)
-        proof = await self._prepareProof(claims, proofInput.nonce)
+        proof = await self._prepareProof(claims, nonce)
         return proof, revealedAttrsWithValues
 
     #
@@ -154,7 +155,7 @@ class Prover:
 
     async def _findClaims(self, proofInput: ProofInput) -> (
             Dict[SchemaKey, ProofClaims], Dict[str, Any]):
-        revealedAttrs, predicates = set([v.name for v in proofInput.revealedAttrs]), set(
+        revealedAttrs, predicates = set(proofInput.revealedAttrs), set(
             proofInput.predicates)
 
         proofClaims = {}

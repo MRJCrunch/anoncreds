@@ -409,27 +409,19 @@ class ClaimsPair(dict):
 
 
 class ProofInput(
-    namedtuple('ProofInput', 'nonce, revealedAttrs, predicates, ts, seqNo'),
+    namedtuple('ProofInput', 'revealedAttrs, predicates, ts, seqNo'),
     NamedTupleStrSerializer):
-    def __new__(cls, nonce=None, revealedAttrs=None, predicates=None, ts=None, seqNo=None):
-        return super(ProofInput, cls).__new__(cls, nonce, revealedAttrs or [],
+    def __new__(cls, revealedAttrs=None, predicates=None, ts=None, seqNo=None):
+        return super(ProofInput, cls).__new__(cls, revealedAttrs or [],
                                               predicates or [],
                                               ts, seqNo)
 
     @classmethod
     def fromStrDict(cls, d):
-        nonce = int(d['nonce'])
-        revealedAttrs = [AttributeInfo.fromStrDict(v) for v in d['revealedAttrs']]
+        d = fromDictWithStrValues(d)
         predicates = [Predicate.fromStrDict(v) for v in d['predicates']]
-
-        return cls(nonce=nonce, revealedAttrs=revealedAttrs, predicates=predicates)
-
-
-class AttributeInfo(
-    namedtuple('ProofInput', 'schema_seq_no, name'),
-    NamedTupleStrSerializer):
-    def __new__(cls, schema_seq_no=None, name=None):
-        return super(AttributeInfo, cls).__new__(cls, schema_seq_no, name)
+        result = cls(**d)
+        return result._replace(predicates=predicates)
 
 
 class ProofClaims(
