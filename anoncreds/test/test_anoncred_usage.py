@@ -5,7 +5,7 @@ from anoncreds.protocol.prover import Prover
 from anoncreds.protocol.repo.attributes_repo import AttributeRepoInMemory
 from anoncreds.protocol.repo.public_repo import PublicRepoInMemory
 from anoncreds.protocol.types import ProofInput, PredicateGE, \
-    ID
+    ID, AttributeInfo
 from anoncreds.protocol.verifier import Verifier
 from anoncreds.protocol.wallet.issuer_wallet import IssuerWalletInMemory
 from anoncreds.protocol.wallet.prover_wallet import ProverWalletInMemory
@@ -44,15 +44,16 @@ async def testSingleIssuerSingleProver(primes1):
     await prover.processClaim(schemaId, claims, signature)
 
     # 6. proof Claims
+    verifier = Verifier(WalletInMemory('verifier1', publicRepo))
+
     proofInput = ProofInput(
-        ['name'],
+        verifier.generateNonce(),
+        [AttributeInfo(name='name')],
         [PredicateGE('age', 18)])
 
-    verifier = Verifier(WalletInMemory('verifier1', publicRepo))
-    nonce = verifier.generateNonce()
-    proof, revealedAttrs = await prover.presentProof(proofInput, nonce)
+    proof, revealedAttrs = await prover.presentProof(proofInput)
     assert revealedAttrs['name'] == 'Alex'
-    assert await verifier.verify(proofInput, proof, revealedAttrs, nonce)
+    assert await verifier.verify(proofInput, proof, revealedAttrs)
 
 
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
@@ -96,16 +97,18 @@ async def testMultiplIssuersSingleProver(primes1, primes2):
     await prover.processClaim(schemaId2, claims2, signature2)
 
     # 6. proof Claims
-    proofInput = ProofInput(['name', 'status'],
-                            [PredicateGE('age', 18), PredicateGE('period', 5)])
-
     verifier = Verifier(WalletInMemory('verifier1', publicRepo))
-    nonce = verifier.generateNonce()
-    proof, revealedAttrs = await prover.presentProof(proofInput, nonce)
+
+    proofInput = ProofInput(
+        verifier.generateNonce(),
+        [AttributeInfo(name='name'), AttributeInfo( name='verifier1')],
+        [PredicateGE('age', 18), PredicateGE('period', 5)])
+
+    proof, revealedAttrs = await prover.presentProof(proofInput)
 
     assert revealedAttrs['name'] == 'Alex'
     assert revealedAttrs['status'] == 'FULL'
-    assert await verifier.verify(proofInput, proof, revealedAttrs, nonce)
+    assert await verifier.verify(proofInput, proof, revealedAttrs)
 
 
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
@@ -145,16 +148,17 @@ async def testSingleIssuerMultipleCredDefsSingleProver(primes1, primes2):
     await prover.processClaims(claims, signature)
 
     # 6. proof Claims
+    verifier = Verifier(WalletInMemory('verifier1', publicRepo))
+
     proofInput = ProofInput(
-        ['name'],
+        verifier.generateNonce(),
+        [AttributeInfo(name='name')],
         [PredicateGE('age', 18), PredicateGE('period', 5)])
 
-    verifier = Verifier(WalletInMemory('verifier1', publicRepo))
-    nonce = verifier.generateNonce()
-    proof, revealedAttrs = await prover.presentProof(proofInput, nonce)
+    proof, revealedAttrs = await prover.presentProof(proofInput)
 
     assert revealedAttrs['name'] == 'Alex'
-    assert await verifier.verify(proofInput, proof, revealedAttrs, nonce)
+    assert await verifier.verify(proofInput, proof, revealedAttrs)
 
 
 @pytest.mark.asyncio
@@ -186,13 +190,14 @@ async def testSingleIssuerSingleProverPrimaryOnly(primes1):
     await prover.processClaim(schemaId, claims, signature)
 
     # 6. proof Claims
+    verifier = Verifier(WalletInMemory('verifier1', publicRepo))
+
     proofInput = ProofInput(
-        ['name'],
+        verifier.generateNonce(),
+        [AttributeInfo(name='name')],
         [PredicateGE('age', 18)])
 
-    verifier = Verifier(WalletInMemory('verifier1', publicRepo))
-    nonce = verifier.generateNonce()
-    proof, revealedAttrs = await prover.presentProof(proofInput, nonce)
+    proof, revealedAttrs = await prover.presentProof(proofInput)
 
     assert revealedAttrs['name'] == 'Alex'
-    assert await verifier.verify(proofInput, proof, revealedAttrs, nonce)
+    assert await verifier.verify(proofInput, proof, revealedAttrs)

@@ -25,7 +25,7 @@ class Verifier:
         return cmod.integer(cmod.randomBits(LARGE_NONCE))
 
     async def verify(self, proofInput: ProofInput, proof: FullProof,
-                     allRevealedAttrs, nonce):
+                     allRevealedAttrs):
         """
         Verifies a proof from the prover.
 
@@ -33,7 +33,6 @@ class Verifier:
         attributes, predicates, timestamps for non-revocation)
         :param proof: a proof
         :param allRevealedAttrs: values of revealed attributes (initial values, non-encoded)
-        :param nonce: verifier's nonce
         :return: True if verified successfully and false otherwise.
         """
         TauList = []
@@ -48,7 +47,7 @@ class Verifier:
                                                               proofItem.primaryProof,
                                                               allRevealedAttrs)
 
-        CHver = self._get_hash(proof.CList, TauList, nonce)
+        CHver = self._get_hash(proof.CList, TauList, proofInput.nonce)
 
         return CHver == proof.cHash
 
