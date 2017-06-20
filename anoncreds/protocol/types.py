@@ -335,8 +335,8 @@ class PrimaryClaim(
     def from_str_dict(cls, data, n):
         m2 = to_crypto_int(data['m2'], str(n))
         a = to_crypto_int(data['a'], str(n))
-        e = to_crypto_int(data['e'], str(n))
-        v = to_crypto_int(data['v'], str(n))
+        e = int(data['e'])
+        v = int(data['v'])
 
         return cls(m2=m2, A=a, e=e, v=v)
 
@@ -377,7 +377,7 @@ class Claims(namedtuple('Claims', 'primaryClaim, nonRevocClaim'),
     def to_str_dict(self):
         return {
             'primaryClaim': self.primaryClaim.to_str_dict(),
-            'nonRevocClaim': self.nonRevocClaim.to_str_dict()
+            'nonRevocClaim': self.nonRevocClaim.to_str_dict() if self.nonRevocClaim else None
         }
 
     @classmethod
