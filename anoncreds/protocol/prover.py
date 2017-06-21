@@ -72,7 +72,7 @@ class Prover:
                                                           reqNonRevoc)
         return res
 
-    async def processClaim(self, schemaId: ID, claims: Claims):
+    async def processClaim(self, schemaId: ID, claims: Dict[str, Sequence[str]], signature: Claims):
         """
         Processes and saves a received Claim for the given Schema.
 
@@ -80,10 +80,12 @@ class Prover:
         definition schema)
         :param claims: claims to be processed and saved
         """
-        await self.wallet.submitContextAttr(schemaId, claims.primaryClaim.m2)
-        await self._initPrimaryClaim(schemaId, claims.primaryClaim)
-        if claims.nonRevocClaim:
-            await self._initNonRevocationClaim(schemaId, claims.nonRevocClaim)
+        await self.wallet.submitContextAttr(schemaId, signature.primaryClaim.m2)
+        await self.wallet.submitClaims(schemaId, claims)
+
+        await self._initPrimaryClaim(schemaId, signature.primaryClaim)
+        if signature.nonRevocClaim:
+            await self._initNonRevocationClaim(schemaId, signature.nonRevocClaim)
 
     async def processClaims(self, allClaims: Dict[ID, Claims]):
         """
@@ -166,15 +168,18 @@ class Prover:
             revealedAttrsForClaim = []
             predicatesForClaim = []
 
+            schema = await self.wallet.getSchema(ID(schemaKey))
+            attrs = await self.wallet.getClaim(ID(schemaKey=schemaKey, schemaId=schema.seqId))
+
             for revealedAttr in revealedAttrs:
-                if revealedAttr in claim.primaryClaim.encodedAttrs:
+                if revealedAttr in attrs:
                     revealedAttrsForClaim.append(revealedAttr)
                     foundRevealedAttrs.add(revealedAttr)
                     revealedAttrsWithValues[revealedAttr] = \
-                        claim.primaryClaim.attrs[revealedAttr]
+                        attrs[revealedAttr][0]
 
             for predicate in predicates:
-                if predicate.attrName in claim.primaryClaim.encodedAttrs:
+                if predicate.attrName in attrs:
                     predicatesForClaim.append(predicate)
                     foundPredicates.add(predicate)
 
@@ -205,6 +210,9 @@ class Prover:
         for schemaKey, val in claims.items():
             c1, c2, revealedAttrs, predicates = val.claims.primaryClaim, val.claims.nonRevocClaim, val.revealedAttrs, val.predicates
 
+            schema = await self.wallet.getSchema(ID(schemaKey))
+            attrs = await self.wallet.getClaim(ID(schemaKey=schemaKey, schemaId=schema.seqId))
+
             nonRevocInitProof = None
             if c2:
                 nonRevocInitProof = await self._nonRevocProofBuilder.initProof(
@@ -218,7 +226,7 @@ class Prover:
                     nonRevocInitProof.TauListParams.m2)) if nonRevocInitProof else None
                 primaryInitProof = await self._primaryProofBuilder.initProof(
                     schemaKey, c1, revealedAttrs, predicates,
-                    m1Tilde, m2Tilde)
+                    m1Tilde, m2Tilde, attrs)
                 CList += primaryInitProof.asCList()
                 TauList += primaryInitProof.asTauList()
 

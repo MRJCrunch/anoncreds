@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Sequence
 
 from anoncreds.protocol.globals import LARGE_MASTER_SECRET, TYPE_CL
 from anoncreds.protocol.primary.primary_claim_issuer import PrimaryClaimIssuer
@@ -97,7 +97,7 @@ class Issuer:
 
     async def issueClaim(self, schemaId: ID, claimRequest: ClaimRequest,
                          iA=None,
-                         i=None) -> Claims:
+                         i=None) -> (Claims, Dict[str, Sequence[str]]):
         """
         Issue a claim for the given user and schema.
 
@@ -120,13 +120,16 @@ class Issuer:
         # TODO this has un-obvious side-effects
         await self._genContxt(schemaId, iA, claimRequest.userId)
 
-        c1 = await self._issuePrimaryClaim(schemaId, attributes,
+        (c1, claim) = await self._issuePrimaryClaim(schemaId, attributes,
                                            claimRequest.U)
         # TODO re-enable when revocation registry is fully implemented
         c2 = await self._issueNonRevocationClaim(schemaId, claimRequest.Ur,
                                                  iA,
                                                  i) if claimRequest.Ur else None
-        return Claims(primaryClaim=c1, nonRevocClaim=c2)
+
+        signature = Claims(primaryClaim=c1, nonRevocClaim=c2)
+
+        return (signature, claim)
 
     async def issueClaims(self, allClaimRequest: Dict[ID, ClaimRequest]) -> \
             Dict[ID, Claims]:
@@ -156,7 +159,7 @@ class Issuer:
         return m2
 
     async def _issuePrimaryClaim(self, schemaId: ID, attributes: Attribs,
-                                 U) -> PrimaryClaim:
+                                 U) -> (PrimaryClaim, Dict[str, Sequence[str]]):
         return await self._primaryIssuer.issuePrimaryClaim(schemaId,
                                                            attributes, U)
 

@@ -6,6 +6,7 @@ from anoncreds.protocol.utils import get_prime_in_range, strToCryptoInteger, \
     randomQR
 from anoncreds.protocol.wallet.issuer_wallet import IssuerWallet
 from config.config import cmod
+from typing import Dict, Sequence
 
 
 class PrimaryClaimIssuer:
@@ -73,7 +74,7 @@ class PrimaryClaimIssuer:
         return prime
 
     async def issuePrimaryClaim(self, schemaId: ID, attributes: Attribs,
-                                U) -> PrimaryClaim:
+                                U) -> (PrimaryClaim, Dict[str, Sequence[str]]):
         u = strToCryptoInteger(U) if isinstance(U, str) else U
 
         if not u:
@@ -90,8 +91,12 @@ class PrimaryClaimIssuer:
         A = await self._sign(schemaId, encodedAttrs, vprimeprime, u, e)
 
         m2 = await self._wallet.getContextAttr(schemaId)
-        return PrimaryClaim(attributes._vals, encodedAttrs, m2, A, e,
-                            vprimeprime)
+        attrs = dict()
+
+        for key in attributes.keys():
+            attrs[key] = (str(attributes._vals[key]), str(encodedAttrs[key]))
+
+        return (PrimaryClaim(m2, A, e, vprimeprime), attrs)
 
     async def _sign(self, schemaId: ID, attrs, v, u, e):
         pk = await self._wallet.getPublicKey(schemaId)

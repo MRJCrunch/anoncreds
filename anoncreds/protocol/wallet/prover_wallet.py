@@ -5,6 +5,7 @@ from anoncreds.protocol.types import ID, \
     Claims, ClaimInitDataType, \
     PrimaryClaim, NonRevocationClaim, ClaimsPair
 from anoncreds.protocol.wallet.wallet import Wallet, WalletInMemory
+from typing import Dict, Sequence, Any
 
 
 class ProverWallet(Wallet):
@@ -12,6 +13,10 @@ class ProverWallet(Wallet):
         Wallet.__init__(self, schemaId, repo)
 
     # SUBMIT
+
+    @abstractmethod
+    async def submitClaims(self, schemaId: ID, claims: Dict[str, Sequence[str]]):
+        raise NotImplementedError
 
     @abstractmethod
     async def submitPrimaryClaim(self, schemaId: ID, claim: PrimaryClaim):
@@ -73,6 +78,8 @@ class ProverWalletInMemory(ProverWallet, WalletInMemory):
     def __init__(self, schemaId, repo: PublicRepo):
         WalletInMemory.__init__(self, schemaId, repo)
 
+        self._claims = {}
+
         # other dicts with key=schemaKey
         self._m1s = {}
         self._m2s = {}
@@ -84,6 +91,9 @@ class ProverWalletInMemory(ProverWallet, WalletInMemory):
         self._nonRevocInitData = {}
 
     # SUBMIT
+
+    async def submitClaims(self, schemaId: ID, claims: Dict[str, Sequence[str]]):
+        await self._cacheValueForId(self._claims, schemaId, claims)
 
     async def submitPrimaryClaim(self, schemaId: ID, claim: PrimaryClaim):
         await self._cacheValueForId(self._c1s, schemaId, claim)
@@ -112,6 +122,9 @@ class ProverWalletInMemory(ProverWallet, WalletInMemory):
 
     async def getMasterSecret(self, schemaId: ID):
         return await self._getValueForId(self._m1s, schemaId)
+
+    async def getClaim(self, schemaId: ID):
+        return await self._getValueForId(self._claims, schemaId)
 
     async def getClaims(self, schemaId: ID) -> Claims:
         c1 = await self._getValueForId(self._c1s, schemaId)

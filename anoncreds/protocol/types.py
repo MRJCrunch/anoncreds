@@ -6,7 +6,6 @@ from anoncreds.protocol.utils import toDictWithStrValues, \
     fromDictWithStrValues, deserializeFromStr, encodeAttr, crypto_int_to_str, to_crypto_int
 from config.config import cmod
 
-
 class AttribType:
     def __init__(self, name: str, encode: bool):
         self.name = name
@@ -312,7 +311,7 @@ class ClaimRequest(namedtuple('ClaimRequest', 'userId, U, Ur'),
 # Accumulator = namedtuple('Accumulator', ['iA', 'acc', 'V', 'L'])
 
 class PrimaryClaim(
-    namedtuple('PrimaryClaim', 'attrs, encodedAttrs, m2, A, e, v'),
+    namedtuple('PrimaryClaim', 'm2, A, e, v'),
     NamedTupleStrSerializer):
     pass
 
@@ -322,6 +321,23 @@ class PrimaryClaim(
             rtn.append('    {}: {}'.format(str(key), str(value)))
 
         return os.linesep.join(rtn)
+
+    def to_str_dict(self):
+        return {
+            'm2': str(crypto_int_to_str(self.m2)),
+            'a': str(crypto_int_to_str(self.A)),
+            'e': str(self.e),
+            'v': str(self.v)
+        }
+
+    @classmethod
+    def from_str_dict(cls, data, n):
+        m2 = to_crypto_int(data['m2'])
+        a = to_crypto_int(data['a'], str(n))
+        e = int(data['e'])
+        v = int(data['v'])
+
+        return cls(m2=m2, A=a, e=e, v=v)
 
 
 class Witness(namedtuple('Witness', 'sigmai, ui, gi, omega, V'),
@@ -339,6 +355,10 @@ class NonRevocationClaim(
         result = cls(**d)
         return result._replace(witness=witness)
 
+    def to_str_dict(self):
+        return {
+        }
+
 
 class Claims(namedtuple('Claims', 'primaryClaim, nonRevocClaim'),
              NamedTupleStrSerializer):
@@ -352,6 +372,23 @@ class Claims(namedtuple('Claims', 'primaryClaim, nonRevocClaim'),
         if 'nonRevocClaim' in d:
             nonRevoc = NonRevocationClaim.fromStrDict(d['nonRevocClaim'])
         return Claims(primaryClaim=primary, nonRevocClaim=nonRevoc)
+
+    def to_str_dict(self):
+        return {
+            'primaryClaim': self.primaryClaim.to_str_dict(),
+            'nonRevocClaim': self.nonRevocClaim.to_str_dict() if self.nonRevocClaim else None
+        }
+
+    @classmethod
+    def from_str_dict(cls, data, n):
+        primary = PrimaryClaim.from_str_dict(data['primaryClaim'], n)
+        nonRevoc = None
+        if 'nonRevocClaim' in data and data['nonRevocClaim']:
+            nonRevoc = NonRevocationClaim.fromStrDict(data['nonRevocClaim'])
+
+        return cls(primaryClaim=primary, nonRevocClaim=nonRevoc)
+
+
 
     def __str__(self):
         return str(self.primaryClaim)

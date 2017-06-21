@@ -186,9 +186,9 @@ def splitRevealedAttrs(encodedAttrs, revealedAttrs):
 
     for k, value in encodedAttrs.items():
         if k in revealedAttrs:
-            Ar[k] = value
+            Ar[k] = int(value[1])
         else:
-            Aur[k] = value
+            Aur[k] = int(value[1])
     return Ar, Aur
 
 
