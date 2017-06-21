@@ -14,7 +14,7 @@ async def testEmpty(prover1, allClaims):
 @pytest.mark.asyncio
 async def testOneRevealedOnly(prover1, allClaims, schemaGvtId, attrRepo):
     proofInput = ProofInput(['name'])
-    claimsGvt = await prover1.wallet.getClaims(schemaGvtId)
+    claimsGvt = await prover1.wallet.getClaimSignature(schemaGvtId)
     proofClaims = {schemaGvtId.schemaKey:
                        ProofClaims(claimsGvt, ['name'], [])}
     revealedAttrs = {'name':
@@ -28,7 +28,7 @@ async def testOneRevealedOnly(prover1, allClaims, schemaGvtId, attrRepo):
 @pytest.mark.asyncio
 async def testPredicatesEmpty(prover1, allClaims, schemaGvtId, attrRepo):
     proofInput = ProofInput(['name'], [])
-    claimsGvt = await prover1.wallet.getClaims(schemaGvtId)
+    claimsGvt = await prover1.wallet.getClaimSignature(schemaGvtId)
     proofClaims = {schemaGvtId.schemaKey:
                        ProofClaims(claimsGvt, ['name'], [])}
     revealedAttrs = {'name':
@@ -42,7 +42,7 @@ async def testPredicatesEmpty(prover1, allClaims, schemaGvtId, attrRepo):
 @pytest.mark.asyncio
 async def testOnePredicateOnly(prover1, allClaims, schemaGvtId):
     proofInput = ProofInput(predicates=[PredicateGE('age', 18)])
-    claimsGvt = await prover1.wallet.getClaims(schemaGvtId)
+    claimsGvt = await prover1.wallet.getClaimSignature(schemaGvtId)
     proofClaims = {schemaGvtId.schemaKey:
                        ProofClaims(claimsGvt, [], [PredicateGE('age', 18)])}
     revealedAttrs = {}
@@ -53,7 +53,7 @@ async def testOnePredicateOnly(prover1, allClaims, schemaGvtId):
 @pytest.mark.asyncio
 async def testRevealedEmpty(prover1, allClaims, schemaGvtId):
     proofInput = ProofInput([], [PredicateGE('age', 18)])
-    claimsGvt = await prover1.wallet.getClaims(schemaGvtId)
+    claimsGvt = await prover1.wallet.getClaimSignature(schemaGvtId)
     proofClaims = {schemaGvtId.schemaKey:
                        ProofClaims(claimsGvt, [], [PredicateGE('age', 18)])}
     revealedAttrs = {}
@@ -65,7 +65,7 @@ async def testRevealedEmpty(prover1, allClaims, schemaGvtId):
 async def testRevealedAndPredicateSameIssuer(prover1, allClaims, schemaGvtId,
                                              attrRepo):
     proofInput = ProofInput(['name'], [PredicateGE('age', 18)])
-    claimsGvt = await prover1.wallet.getClaims(schemaGvtId)
+    claimsGvt = await prover1.wallet.getClaimSignature(schemaGvtId)
     proofClaims = {schemaGvtId.schemaKey:
                        ProofClaims(claimsGvt, ['name'],
                                    [PredicateGE('age', 18)])}
@@ -82,8 +82,8 @@ async def testRevealedAndPredicateDifferentIssuers(prover1, allClaims,
                                                    schemaGvtId, schemaXyzId,
                                                    attrRepo):
     proofInput = ProofInput(['status'], [PredicateGE('age', 18)])
-    claimsGvt = await prover1.wallet.getClaims(schemaGvtId)
-    claimsXyz = await prover1.wallet.getClaims(schemaXyzId)
+    claimsGvt = await prover1.wallet.getClaimSignature(schemaGvtId)
+    claimsXyz = await prover1.wallet.getClaimSignature(schemaXyzId)
     proofClaims = {schemaGvtId.schemaKey:
                        ProofClaims(claimsGvt, [], [PredicateGE('age', 18)]),
                    schemaXyzId.schemaKey:
@@ -100,8 +100,8 @@ async def testRevealedAndPredicateDifferentIssuers(prover1, allClaims,
 async def testMultipledRevealed(prover1, allClaims, schemaGvtId,
                                 schemaXyzId, attrRepo):
     proofInput = ProofInput(['status', 'name'], [])
-    claimsGvt = await prover1.wallet.getClaims(schemaGvtId)
-    claimsXyz = await prover1.wallet.getClaims(schemaXyzId)
+    claimsGvt = await prover1.wallet.getClaimSignature(schemaGvtId)
+    claimsXyz = await prover1.wallet.getClaimSignature(schemaXyzId)
     proofClaims = {schemaGvtId.schemaKey:
                        ProofClaims(claimsGvt, ['name'], []),
                    schemaXyzId.schemaKey:
@@ -124,8 +124,8 @@ async def testMultipledPredicates(prover1, allClaims, schemaGvtId,
                                   schemaXyzId):
     proofInput = ProofInput([],
                             [PredicateGE('age', 18), PredicateGE('period', 8)])
-    claimsGvt = await prover1.wallet.getClaims(schemaGvtId)
-    claimsXyz = await prover1.wallet.getClaims(schemaXyzId)
+    claimsGvt = await prover1.wallet.getClaimSignature(schemaGvtId)
+    claimsXyz = await prover1.wallet.getClaimSignature(schemaXyzId)
     proofClaims = {schemaGvtId.schemaKey:
                        ProofClaims(claimsGvt, [], [PredicateGE('age', 18)]),
                    schemaXyzId.schemaKey:
@@ -140,8 +140,8 @@ async def testMultipleAll(prover1, allClaims, schemaGvtId, schemaXyzId,
                           attrRepo):
     proofInput = ProofInput(['status', 'name'],
                             [PredicateGE('age', 18), PredicateGE('period', 8)])
-    claimsGvt = await prover1.wallet.getClaims(schemaGvtId)
-    claimsXyz = await prover1.wallet.getClaims(schemaXyzId)
+    claimsGvt = await prover1.wallet.getClaimSignature(schemaGvtId)
+    claimsXyz = await prover1.wallet.getClaimSignature(schemaXyzId)
     proofClaims = {schemaGvtId.schemaKey:
                        ProofClaims(claimsGvt, ['name'],
                                    [PredicateGE('age', 18)]),

@@ -121,17 +121,6 @@ async def testNonceShouldBeSame(prover1, verifier, claimsProver1Gvt, nonce,
 
 
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
-def testAttrsInClaims(claimsProver1Gvt, attrsProver1Gvt):
-    attrs = claimsProver1Gvt.primaryClaim.attrs
-    encodedAttrs = claimsProver1Gvt.primaryClaim.encodedAttrs
-
-    assert attrs
-    assert encodedAttrs
-    assert attrs == attrsProver1Gvt._vals
-    assert encodedAttrs.keys() == attrsProver1Gvt.keys()
-
-
-@pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
 @pytest.mark.asyncio
 async def testUParamShouldBeSame(prover1, verifier, issuerGvt, schemaGvtId,
                                  attrsProver1Gvt, keysGvt,
@@ -139,8 +128,8 @@ async def testUParamShouldBeSame(prover1, verifier, issuerGvt, schemaGvtId,
     claimsReq = await prover1.createClaimRequest(schemaGvtId)
 
     claimsReq = claimsReq._replace(U=claimsReq.U ** 2)
-    claims = await issuerGvt.issueClaim(schemaGvtId, claimsReq)
-    await prover1.processClaim(schemaGvtId, claims)
+    (signature, claims) = await issuerGvt.issueClaim(schemaGvtId, claimsReq)
+    await prover1.processClaim(schemaGvtId, claims, signature)
 
     proofInput = ProofInput(['name'], [])
     assert not await presentProofAndVerify(verifier, proofInput, prover1)
@@ -153,7 +142,7 @@ async def testUrParamShouldBeSame(prover1, issuerGvt, schemaGvtId,
     claimsReq = await prover1.createClaimRequest(schemaGvtId)
 
     claimsReq = claimsReq._replace(Ur=claimsReq.Ur ** 2)
-    claims = await issuerGvt.issueClaim(schemaGvtId, claimsReq)
+    (signature, claims) = await issuerGvt.issueClaim(schemaGvtId, claimsReq)
 
     with pytest.raises(ValueError):
-        await prover1.processClaim(schemaGvtId, claims)
+        await prover1.processClaim(schemaGvtId, claims, signature)

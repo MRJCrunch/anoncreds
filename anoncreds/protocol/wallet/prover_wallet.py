@@ -15,7 +15,7 @@ class ProverWallet(Wallet):
     # SUBMIT
 
     @abstractmethod
-    async def submitClaims(self, schemaId: ID, claims: Dict[str, Sequence[str]]):
+    async def submitClaim(self, schemaId: ID, claims: Dict[str, Sequence[str]]):
         raise NotImplementedError
 
     @abstractmethod
@@ -52,11 +52,11 @@ class ProverWallet(Wallet):
         raise NotImplementedError
 
     @abstractmethod
-    async def getClaims(self, schemaId: ID) -> Claims:
+    async def getClaimSignature(self, schemaId: ID) -> Claims:
         raise NotImplementedError
 
     @abstractmethod
-    async def getAllClaims(self) -> ClaimsPair:
+    async def getAllClaimsSignatures(self) -> ClaimsPair:
         raise NotImplementedError
 
     @abstractmethod
@@ -92,7 +92,7 @@ class ProverWalletInMemory(ProverWallet, WalletInMemory):
 
     # SUBMIT
 
-    async def submitClaims(self, schemaId: ID, claims: Dict[str, Sequence[str]]):
+    async def submitClaim(self, schemaId: ID, claims: Dict[str, Sequence[str]]):
         await self._cacheValueForId(self._claims, schemaId, claims)
 
     async def submitPrimaryClaim(self, schemaId: ID, claim: PrimaryClaim):
@@ -126,16 +126,16 @@ class ProverWalletInMemory(ProverWallet, WalletInMemory):
     async def getClaim(self, schemaId: ID):
         return await self._getValueForId(self._claims, schemaId)
 
-    async def getClaims(self, schemaId: ID) -> Claims:
+    async def getClaimSignature(self, schemaId: ID) -> Claims:
         c1 = await self._getValueForId(self._c1s, schemaId)
         c2 = None if not self._c2s else await self._getValueForId(self._c2s,
                                                                   schemaId)
         return Claims(c1, c2)
 
-    async def getAllClaims(self) -> ClaimsPair:
+    async def getAllClaimsSignatures(self) -> ClaimsPair:
         res = ClaimsPair()
         for schemaKey in self._c1s.keys():
-            res[schemaKey] = await self.getClaims(ID(schemaKey))
+            res[schemaKey] = await self.getClaimSignature(ID(schemaKey))
         return res
 
     async def getPrimaryClaimInitData(self,

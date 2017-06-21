@@ -81,13 +81,13 @@ class Prover:
         :param claims: claims to be processed and saved
         """
         await self.wallet.submitContextAttr(schemaId, signature.primaryClaim.m2)
-        await self.wallet.submitClaims(schemaId, claims)
+        await self.wallet.submitClaim(schemaId, claims)
 
         await self._initPrimaryClaim(schemaId, signature.primaryClaim)
         if signature.nonRevocClaim:
             await self._initNonRevocationClaim(schemaId, signature.nonRevocClaim)
 
-    async def processClaims(self, allClaims: Dict[ID, Claims]):
+    async def processClaims(self, allClaims):
         """
         Processes and saves received Claims.
 
@@ -95,8 +95,8 @@ class Prover:
         definition.
         """
         res = []
-        for schemaId, claims in allClaims.items():
-            res.append(await self.processClaim(schemaId, claims))
+        for schemaId, (signature, claims) in allClaims.items():
+            res.append(await self.processClaim(schemaId, claims, signature))
         return res
 
     async def presentProof(self, proofInput: ProofInput, nonce) -> (
@@ -163,7 +163,7 @@ class Prover:
         foundPredicates = set()
         revealedAttrsWithValues = {}
 
-        allClaims = await self.wallet.getAllClaims()
+        allClaims = await self.wallet.getAllClaimsSignatures()
         for schemaKey, claim in allClaims.items():
             revealedAttrsForClaim = []
             predicatesForClaim = []

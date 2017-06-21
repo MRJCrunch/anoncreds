@@ -141,8 +141,8 @@ async def testSingleIssuerMultipleCredDefsSingleProver(primes1, primes2):
     # 5. request Claims
     prover = Prover(ProverWalletInMemory(userId, publicRepo))
     claimsReqs = await prover.createClaimRequests([schemaId1, schemaId2])
-    (signature, claims) = await issuer.issueClaims(claimsReqs)
-    await prover.processClaims(claims, signature)
+    claims = await issuer.issueClaims(claimsReqs)
+    await prover.processClaims(claims)
 
     # 6. proof Claims
     proofInput = ProofInput(
