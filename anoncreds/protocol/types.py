@@ -310,17 +310,7 @@ class ClaimRequest(namedtuple('ClaimRequest', 'userId, U, Ur'),
 
 # Accumulator = namedtuple('Accumulator', ['iA', 'acc', 'V', 'L'])
 
-class PrimaryClaim(
-    namedtuple('PrimaryClaim', 'm2, A, e, v'),
-    NamedTupleStrSerializer):
-    pass
-
-    def __str__(self):
-        rtn = ['Attributes:']
-        for key, value in self.attrs.items():
-            rtn.append('    {}: {}'.format(str(key), str(value)))
-
-        return os.linesep.join(rtn)
+class PrimaryClaim(namedtuple('PrimaryClaim', 'm2, A, e, v'), NamedTupleStrSerializer):
 
     def to_str_dict(self):
         return {
