@@ -2,7 +2,7 @@ import pytest
 
 from anoncreds.protocol.types import PublicKey, Schema, Claims, \
     ProofInput, PredicateGE, FullProof, \
-    SchemaKey, ClaimRequest, Proof
+    SchemaKey, ClaimRequest, Proof, PrimaryClaim
 from anoncreds.protocol.utils import toDictWithStrValues, fromDictWithStrValues
 from config.config import cmod
 
@@ -72,6 +72,24 @@ def test_claim_request_from_to_dict():
     assert claim_request.to_str_dict() == claim_request_serialized
     assert claim_request == ClaimRequest.from_str_dict(claim_request_serialized, n)
 
+
+def test_claim_from_to_dict():
+    n = cmod.integer(111111111)
+    m2 = cmod.integer(123)
+    a = cmod.integer(456) % n
+    e = 567
+    v = cmod.integer(999)
+
+    claim = PrimaryClaim(m2, a, e, v)
+    claim_serialized = {
+        'm2': '123',
+        'a': '456',
+        'e': '567',
+        'v': '999'
+    }
+
+    assert claim_serialized == claim.to_str_dict()
+    assert claim == PrimaryClaim.from_str_dict(claim_serialized, n)
 
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
 def testRequestClaimsFromToDict(claimsRequestProver1Gvt):
