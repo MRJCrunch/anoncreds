@@ -10,7 +10,7 @@ from anoncreds.protocol.revocation.accumulators.non_revocation_proof_builder imp
 from anoncreds.protocol.types import PrimaryClaim, NonRevocationClaim, Proof, \
     InitProof, ProofInput, ProofClaims, \
     FullProof, \
-    Schema, ID, SchemaKey, ClaimRequest, Claims
+    Schema, ID, SchemaKey, ClaimRequest, Claims, RequestedProof, AggregatedProof, ProofInfo, AttributeValues
 from anoncreds.protocol.utils import get_hash_as_int
 from anoncreds.protocol.wallet.prover_wallet import ProverWallet
 from config.config import cmod
@@ -72,7 +72,7 @@ class Prover:
                                                           reqNonRevoc)
         return res
 
-    async def processClaim(self, schemaId: ID, claims: Dict[str, Sequence[str]], signature: Claims):
+    async def processClaim(self, schemaId: ID, claims: Dict[str, AttributeValues], signature: Claims):
         """
         Processes and saves a received Claim for the given Schema.
 
@@ -81,7 +81,7 @@ class Prover:
         :param claims: claims to be processed and saved
         """
         await self.wallet.submitContextAttr(schemaId, signature.primaryClaim.m2)
-        await self.wallet.submitClaims(schemaId, claims)
+        await self.wallet.submitClaim(schemaId, claims)
 
         await self._initPrimaryClaim(schemaId, signature.primaryClaim)
         if signature.nonRevocClaim:
@@ -95,12 +95,11 @@ class Prover:
         definition.
         """
         res = []
-        for schemaId, claims in allClaims.items():
-            res.append(await self.processClaim(schemaId, claims))
+        for schemaId, (signature, claims) in allClaims.items():
+            res.append(await self.processClaim(schemaId, claims, signature))
         return res
 
-    async def presentProof(self, proofInput: ProofInput) -> (
-            FullProof, Dict[str, Any]):
+    async def presentProof(self, proofInput: ProofInput) -> FullProof:
         """
         Presents a proof to the verifier.
 
@@ -108,9 +107,9 @@ class Prover:
         attributes, predicates, timestamps for non-revocation)
         :return: a proof (both primary and non-revocation) and revealed attributes (initial non-encoded values)
         """
-        claims, revealedAttrsWithValues = await self._findClaims(proofInput)
-        proof = await self._prepareProof(claims, proofInput.nonce)
-        return proof, revealedAttrsWithValues
+        claims, proofRequest = await self._findClaims(proofInput)
+        proof = await self._prepareProof(claims, proofInput.nonce, proofRequest)
+        return proof
 
     #
     # REQUEST CLAIMS
@@ -154,68 +153,75 @@ class Prover:
 
     async def _findClaims(self, proofInput: ProofInput) -> (
             Dict[SchemaKey, ProofClaims], Dict[str, Any]):
-        revealedAttrs, predicates = set([v.name for v in proofInput.revealedAttrs]), set(
-            proofInput.predicates)
+        revealedAttrs, predicates = proofInput.revealedAttrs, proofInput.predicates
 
+        foundRevealedAttrs = {}
+        foundPredicates = {}
         proofClaims = {}
-        foundRevealedAttrs = set()
-        foundPredicates = set()
-        revealedAttrsWithValues = {}
-
         allClaims = await self.wallet.getAllClaims()
-        for schemaKey, claim in allClaims.items():
-            revealedAttrsForClaim = []
-            predicatesForClaim = []
 
-            schema = await self.wallet.getSchema(ID(schemaKey))
-            attrs = await self.wallet.getClaim(ID(schemaKey=schemaKey, schemaId=schema.seqId))
+        async def addProof():
+            revealedAttrsForClaim = [a for a in revealedAttrs.values() if a.name in claim.keys()]
+            revealedPredicatesForClaim = [p for p in predicates.values() if p.attrName in claim.keys()]
 
-            for revealedAttr in revealedAttrs:
-                if revealedAttr in attrs:
-                    revealedAttrsForClaim.append(revealedAttr)
-                    foundRevealedAttrs.add(revealedAttr)
-                    revealedAttrsWithValues[revealedAttr] = \
-                        attrs[revealedAttr][0]
+            claims = await self.wallet.getClaimSignature(ID(schemaId=schemaId))
+            proofClaim = ProofClaims(claims=claims, revealedAttrs=revealedAttrsForClaim,
+                                     predicates=revealedPredicatesForClaim)
 
-            for predicate in predicates:
-                if predicate.attrName in attrs:
-                    predicatesForClaim.append(predicate)
-                    foundPredicates.add(predicate)
+            proofClaims[schemaId] = proofClaim
 
-            if revealedAttrsForClaim or predicatesForClaim:
-                proofClaims[schemaKey] = ProofClaims(claim,
-                                                      revealedAttrsForClaim,
-                                                      predicatesForClaim)
+        for uuid, revealedAttr in revealedAttrs.items():
+            claim = None
+            for schemaKey, c in allClaims.items():
+                if revealedAttr.name in c:
+                    claim = c
+                    schemaId = (await self.wallet.getSchema(ID(schemaKey))).seqId
+                    foundRevealedAttrs[uuid] = [str(schemaId), str(claim[revealedAttr.name].raw),
+                                                str(claim[revealedAttr.name].encoded)]
 
-        if foundRevealedAttrs != revealedAttrs:
-            raise ValueError(
-                "A claim isn't found for the following attributes: {}",
-                revealedAttrs - foundRevealedAttrs)
-        if foundPredicates != predicates:
-            raise ValueError(
-                "A claim isn't found for the following predicates: {}",
-                predicates - foundPredicates)
+                    if schemaId not in proofClaims:
+                        await addProof()
+                    break
 
-        return proofClaims, revealedAttrsWithValues
+            if not claim:
+                raise ValueError("A claim isn't found for the following attributes: {}", revealedAttr.name)
+
+        for uuid, predicate in predicates.items():
+            claim = None
+            for schemaKey, c in allClaims.items():
+                if predicate.attrName in c:
+                    claim = c
+                    schemaId = (await self.wallet.getSchema(ID(schemaKey))).seqId
+                    foundPredicates[uuid] = str(schemaId)
+
+                    if schemaId not in proofClaims:
+                        await addProof()
+                    break
+
+            if not claim:
+                raise ValueError("A claim isn't found for the following predicate: {}", predicate)
+
+        requestedProof = RequestedProof(revealed_attrs=foundRevealedAttrs, predicates=foundPredicates)
+
+        return proofClaims, requestedProof
 
     async def _prepareProof(self, claims: Dict[SchemaKey, ProofClaims],
-                            nonce) -> FullProof:
+                            nonce, proofRequest) -> FullProof:
         m1Tilde = cmod.integer(cmod.randomBits(LARGE_M2_TILDE))
         initProofs = {}
         CList = []
         TauList = []
 
         # 1. init proofs
-        for schemaKey, val in claims.items():
+        for schemaId, val in claims.items():
             c1, c2, revealedAttrs, predicates = val.claims.primaryClaim, val.claims.nonRevocClaim, val.revealedAttrs, val.predicates
 
-            schema = await self.wallet.getSchema(ID(schemaKey))
-            attrs = await self.wallet.getClaim(ID(schemaKey=schemaKey, schemaId=schema.seqId))
+            claim = await self.wallet.getClaim(ID(schemaId=schemaId))
 
             nonRevocInitProof = None
             if c2:
                 nonRevocInitProof = await self._nonRevocProofBuilder.initProof(
-                    schemaKey, c2)
+                    schemaId, c2)
                 CList += nonRevocInitProof.asCList()
                 TauList += nonRevocInitProof.asTauList()
 
@@ -224,31 +230,37 @@ class Prover:
                 m2Tilde = cmod.integer(int(
                     nonRevocInitProof.TauListParams.m2)) if nonRevocInitProof else None
                 primaryInitProof = await self._primaryProofBuilder.initProof(
-                    schemaKey, c1, revealedAttrs, predicates,
-                    m1Tilde, m2Tilde, attrs)
+                    schemaId, c1, revealedAttrs, predicates,
+                    m1Tilde, m2Tilde, claim)
                 CList += primaryInitProof.asCList()
                 TauList += primaryInitProof.asTauList()
 
             initProof = InitProof(nonRevocInitProof, primaryInitProof)
-            initProofs[schemaKey] = initProof
+            initProofs[schemaId] = initProof
 
         # 2. hash
         cH = self._get_hash(CList, TauList, nonce)
 
         # 3. finalize proofs
-        proofs = []
-        schemaKeys = []
-        for schemaKey, initProof in initProofs.items():
-            schemaKeys.append(schemaKey)
+        proofs = {}
+        for schemaId, initProof in initProofs.items():
             nonRevocProof = None
             if initProof.nonRevocInitProof:
                 nonRevocProof = await self._nonRevocProofBuilder.finalizeProof(
-                    schemaKey, cH, initProof.nonRevocInitProof)
+                    schemaId, cH, initProof.nonRevocInitProof)
             primaryProof = await self._primaryProofBuilder.finalizeProof(
-                schemaKey, cH, initProof.primaryInitProof)
-            proofs.append(Proof(primaryProof, nonRevocProof))
+                schemaId, cH, initProof.primaryInitProof)
 
-        return FullProof(cH, schemaKeys, proofs, CList)
+            pk = await self.wallet.getPublicKey(ID(schemaId=schemaId))
+
+            proof = Proof(primaryProof, nonRevocProof)
+            proofInfo = ProofInfo(proof=proof, claim_def_seq_no=pk.seqId, schema_seq_no=schemaId)
+
+            proofs[str(schemaId)] = proofInfo
+
+        aggregatedProof = AggregatedProof(cH, CList)
+
+        return FullProof(proofs, aggregatedProof, proofRequest)
 
     async def _getCList(self, initProofs: Dict[Schema, InitProof]):
         CList = []

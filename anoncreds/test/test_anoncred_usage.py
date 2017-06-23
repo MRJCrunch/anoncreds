@@ -48,12 +48,12 @@ async def testSingleIssuerSingleProver(primes1):
 
     proofInput = ProofInput(
         verifier.generateNonce(),
-        [AttributeInfo(name='name')],
-        [PredicateGE('age', 18)])
+        {'attr_uuid': AttributeInfo(name='name')},
+        {'predicate_uuid': PredicateGE('age', 18)})
 
-    proof, revealedAttrs = await prover.presentProof(proofInput)
-    assert revealedAttrs['name'] == 'Alex'
-    assert await verifier.verify(proofInput, proof, revealedAttrs)
+    proof = await prover.presentProof(proofInput)
+    assert proof.requestedProof.revealed_attrs['attr_uuid'][1] == 'Alex'
+    assert await verifier.verify(proofInput, proof)
 
 
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
@@ -69,7 +69,7 @@ async def testMultiplIssuersSingleProver(primes1, primes2):
     schema1 = await issuer1.genSchema('GVT', '1.0', GVT.attribNames())
     schemaId1 = ID(schema1.getKey())
     schema2 = await issuer2.genSchema('XYZCorp', '1.0',
-                                        XYZCorp.attribNames())
+                                      XYZCorp.attribNames())
     schemaId2 = ID(schema2.getKey())
 
     # 3. Create keys for the Schema
@@ -101,14 +101,17 @@ async def testMultiplIssuersSingleProver(primes1, primes2):
 
     proofInput = ProofInput(
         verifier.generateNonce(),
-        [AttributeInfo(name='name'), AttributeInfo( name='verifier1')],
-        [PredicateGE('age', 18), PredicateGE('period', 5)])
+        {'attr_uuid1': AttributeInfo(name='name'),
+         'attr_uuid2': AttributeInfo(name='status')},
+        {'predicate_uuid1': PredicateGE('age', 18),
+         'predicate_uuid2': PredicateGE('period', 5)})
 
-    proof, revealedAttrs = await prover.presentProof(proofInput)
+    proof = await prover.presentProof(proofInput)
 
-    assert revealedAttrs['name'] == 'Alex'
-    assert revealedAttrs['status'] == 'FULL'
-    assert await verifier.verify(proofInput, proof, revealedAttrs)
+    assert proof.requestedProof.revealed_attrs['attr_uuid1'][1] == 'Alex'
+    assert proof.requestedProof.revealed_attrs['attr_uuid2'][1] == 'FULL'
+
+    assert await verifier.verify(proofInput, proof)
 
 
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
@@ -123,7 +126,7 @@ async def testSingleIssuerMultipleCredDefsSingleProver(primes1, primes2):
     schema1 = await issuer.genSchema('GVT', '1.0', GVT.attribNames())
     schemaId1 = ID(schema1.getKey())
     schema2 = await issuer.genSchema('XYZCorp', '1.0',
-                                       XYZCorp.attribNames())
+                                     XYZCorp.attribNames())
     schemaId2 = ID(schema2.getKey())
 
     # 3. Create keys for the Schema
@@ -144,21 +147,22 @@ async def testSingleIssuerMultipleCredDefsSingleProver(primes1, primes2):
     # 5. request Claims
     prover = Prover(ProverWalletInMemory(userId, publicRepo))
     claimsReqs = await prover.createClaimRequests([schemaId1, schemaId2])
-    (signature, claims) = await issuer.issueClaims(claimsReqs)
-    await prover.processClaims(claims, signature)
+    claims = await issuer.issueClaims(claimsReqs)
+    await prover.processClaims(claims)
 
     # 6. proof Claims
     verifier = Verifier(WalletInMemory('verifier1', publicRepo))
 
     proofInput = ProofInput(
         verifier.generateNonce(),
-        [AttributeInfo(name='name')],
-        [PredicateGE('age', 18), PredicateGE('period', 5)])
+        {'attr_uuid1': AttributeInfo(name='name')},
+        {'predicate_uuid1': PredicateGE('age', 18),
+         'predicate_uuid2': PredicateGE('period', 5)})
 
-    proof, revealedAttrs = await prover.presentProof(proofInput)
+    proof = await prover.presentProof(proofInput)
 
-    assert revealedAttrs['name'] == 'Alex'
-    assert await verifier.verify(proofInput, proof, revealedAttrs)
+    assert proof.requestedProof.revealed_attrs['attr_uuid1'][1] == 'Alex'
+    assert await verifier.verify(proofInput, proof)
 
 
 @pytest.mark.asyncio
@@ -194,10 +198,10 @@ async def testSingleIssuerSingleProverPrimaryOnly(primes1):
 
     proofInput = ProofInput(
         verifier.generateNonce(),
-        [AttributeInfo(name='name')],
-        [PredicateGE('age', 18)])
+        {'attr_uuid1': AttributeInfo(name='name')},
+        {'predicate_uuid1': PredicateGE('age', 18)})
 
-    proof, revealedAttrs = await prover.presentProof(proofInput)
+    proof = await prover.presentProof(proofInput)
 
-    assert revealedAttrs['name'] == 'Alex'
-    assert await verifier.verify(proofInput, proof, revealedAttrs)
+    assert proof.requestedProof.revealed_attrs['attr_uuid1'][1] == 'Alex'
+    assert await verifier.verify(proofInput, proof)

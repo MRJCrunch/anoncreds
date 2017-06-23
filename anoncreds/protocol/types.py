@@ -3,7 +3,8 @@ from collections import namedtuple
 from typing import TypeVar, Sequence, Dict, Set
 
 from anoncreds.protocol.utils import toDictWithStrValues, \
-    fromDictWithStrValues, deserializeFromStr, encodeAttr, crypto_int_to_str, to_crypto_int
+    fromDictWithStrValues, deserializeFromStr, encodeAttr, crypto_int_to_str, to_crypto_int, isCryptoInteger, \
+    intToArrayBytes, bytesToInt
 from config.config import cmod
 
 class AttribType:
@@ -263,6 +264,20 @@ class Predicate(namedtuple('Predicate', 'attrName, value, type'),
     def __hash__(self):
         return hash(self.__key())
 
+    def to_str_dict(self):
+        return {
+            'attrName': self.attrName,
+            'value': self.value,
+            'type': self.type
+        }
+
+    @classmethod
+    def from_str_dict(cls, d):
+        attrName = d['attrName']
+        value = d['value']
+        type = d['type']
+        return Predicate(attrName=attrName, value=value, type=type)
+
 
 # TODO: now we consdider only  >= predicate. Support other types of predicates
 class PredicateGE(Predicate):
@@ -412,17 +427,53 @@ class ProofInput(
     namedtuple('ProofInput', 'nonce, revealedAttrs, predicates, ts, seqNo'),
     NamedTupleStrSerializer):
     def __new__(cls, nonce=None, revealedAttrs=None, predicates=None, ts=None, seqNo=None):
-        return super(ProofInput, cls).__new__(cls, nonce, revealedAttrs or [],
-                                              predicates or [],
+        return super(ProofInput, cls).__new__(cls, nonce, revealedAttrs or {},
+                                              predicates or {},
                                               ts, seqNo)
 
     @classmethod
     def fromStrDict(cls, d):
-        nonce = int(d['nonce'])
-        revealedAttrs = [AttributeInfo.fromStrDict(v) for v in d['revealedAttrs']]
-        predicates = [Predicate.fromStrDict(v) for v in d['predicates']]
+        d = fromDictWithStrValues(d)
+        revealedAttrs = {}
+        for k, v in d['revealedAttrs'].items():
+            revealedAttrs[k] = AttributeInfo.fromStrDict(d['revealedAttrs'][k])
 
-        return cls(nonce=nonce, revealedAttrs=revealedAttrs, predicates=predicates)
+        predicates = {}
+        for k, v in d['predicates'].items():
+            predicates[k] = Predicate.fromStrDict(d['predicates'][k])
+
+        result = cls(**d)
+        return result._replace(revealedAttrs=revealedAttrs, predicates=predicates)
+
+    def to_str_dict(self):
+
+        revealedAttrs = {}
+        for k, v in self.revealedAttrs.items():
+            revealedAttrs[k] = v.to_str_dict()
+
+        predicates = {}
+        for k, v in self.predicates.items():
+            predicates[k] = v.to_str_dict()
+
+        return {
+            'nonce': str(self.nonce),
+            'revealedAttrs': revealedAttrs,
+            'predicates': predicates
+        }
+
+    @classmethod
+    def from_str_dict(cls, d):
+        nonce = int(d['nonce'])
+
+        revealedAttrs = {}
+        for k, v in d['revealedAttrs'].items():
+            revealedAttrs[k] = AttributeInfo.from_str_dict(d['revealedAttrs'][k])
+
+            predicates = {}
+        for k, v in d['predicates'].items():
+            predicates[k] = Predicate.from_str_dict(d['predicates'][k])
+
+        return ProofInput(nonce=nonce, revealedAttrs=revealedAttrs, predicates=predicates)
 
 
 class AttributeInfo(
@@ -430,6 +481,20 @@ class AttributeInfo(
     NamedTupleStrSerializer):
     def __new__(cls, schema_seq_no=None, name=None):
         return super(AttributeInfo, cls).__new__(cls, schema_seq_no, name)
+
+    def to_str_dict(self):
+        return {
+            'schema_seq_no': self.schema_seq_no,
+            'name': self.name
+        }
+
+    @classmethod
+    def from_str_dict(cls, d):
+        schema_seq_no = None
+        if d['schema_seq_no']:
+            schema_seq_no = int(d['schema_seq_no'])
+        name = d['name']
+        return AttributeInfo(schema_seq_no=schema_seq_no, name=name)
 
 
 class ProofClaims(
@@ -564,9 +629,46 @@ class InitProof(namedtuple('InitProof', 'nonRevocInitProof, primaryInitProof'),
 
 
 class PrimaryEqualProof(namedtuple('PrimaryEqualProof',
-                                   'e, v, m, m1, m2, Aprime, revealedAttrNames'),
+                                   'e, v, m, m1, m2, Aprime, revealedAttrs'),
                         NamedTupleStrSerializer):
     pass
+
+    def to_str_dict(self):
+        primaryEqualProof = {
+            'e': str(crypto_int_to_str(self.e)),
+            'v': str(crypto_int_to_str(self.v)),
+            'm1': str(crypto_int_to_str(self.m1)),
+            'm2': str(crypto_int_to_str(self.m2)),
+            'm': {},
+            'revealedAttrs': {},
+            'Aprime': str(crypto_int_to_str(self.Aprime))
+        }
+
+        for key in self.m:
+            primaryEqualProof['m'][key] = str(crypto_int_to_str(self.m[key]))
+
+        for key in self.revealedAttrs:
+            primaryEqualProof['revealedAttrs'][key] = str(self.revealedAttrs[key])
+
+        return primaryEqualProof
+
+    @classmethod
+    def from_str_dict(cls, d, n):
+        e = to_crypto_int(d['e'])
+        v = to_crypto_int(d['v'])
+        m1 = to_crypto_int(d['m1'])
+        m2 = to_crypto_int(d['m2'])
+        Aprime = to_crypto_int(d['Aprime'], str(n))
+        revealedAttrs = {}
+        m = {}
+
+        for k in d['m']:
+            m[k] = to_crypto_int(d['m'][k])
+
+        for k in d['revealedAttrs']:
+            revealedAttrs[k] = to_crypto_int(d['revealedAttrs'][k])
+
+        return PrimaryEqualProof(e=e, v=v, m1=m1, m2=m2, m=m, Aprime=Aprime, revealedAttrs=revealedAttrs)
 
 
 class PrimaryPredicateGEProof(
@@ -578,6 +680,47 @@ class PrimaryPredicateGEProof(
         predicate = PredicateGE(**d['predicate'])
         result = cls(**d)
         return result._replace(predicate=predicate)
+
+    def to_str_dict(self):
+        primaryPredicateGEProof = {
+            'alpha': str(crypto_int_to_str(self.alpha)),
+            'mj': str(crypto_int_to_str(self.mj)),
+            'u': {},
+            'r': {},
+            'T': {},
+            'predicate': self.predicate.to_str_dict()
+        }
+
+        for key in self.u:
+            primaryPredicateGEProof['u'][key] = str(crypto_int_to_str(self.u[key]))
+
+        for key in self.r:
+            primaryPredicateGEProof['r'][key] = str(crypto_int_to_str(self.r[key]))
+
+        for key in self.T:
+            primaryPredicateGEProof['T'][key] = str(crypto_int_to_str(self.T[key]))
+
+        return primaryPredicateGEProof
+
+    @classmethod
+    def from_str_dict(cls, d, n):
+        alpha = to_crypto_int(d['alpha'])
+        mj = to_crypto_int(d['mj'])
+        u = {}
+        r = {}
+        T = {}
+        predicate = PredicateGE.from_str_dict(d['predicate'])
+
+        for k in d['u']:
+            u[k] = to_crypto_int(d['u'][k])
+
+        for k in d['r']:
+            r[k] = to_crypto_int(d['r'][k])
+
+        for k in d['T']:
+            T[k] = to_crypto_int(d['T'][k], str(n))
+
+        return PrimaryPredicateGEProof(alpha=alpha, mj=mj, u=u, r=r, T=T, predicate=predicate)
 
 
 class NonRevocProof(namedtuple('NonRevocProof', 'XList CProof'),
@@ -602,6 +745,19 @@ class PrimaryProof(namedtuple('PrimaryProof', 'eqProof, geProofs'),
                     d['geProofs']]
         return PrimaryProof(eqProof=eqProof, geProofs=geProofs)
 
+    def to_str_dict(self):
+        return {
+            'eqProof': self.eqProof.to_str_dict(),
+            'geProofs': [p.to_str_dict() for p in self.geProofs]
+        }
+
+    @classmethod
+    def from_str_dict(cls, d, n):
+        eqProof = PrimaryEqualProof.from_str_dict(d['eqProof'], n)
+        geProofs = [PrimaryPredicateGEProof.from_str_dict(p, n) for p in d['geProofs']]
+
+        return PrimaryProof(eqProof=eqProof, geProofs=geProofs)
+
 
 class Proof(namedtuple('Proof', 'primaryProof, nonRevocProof'),
             NamedTupleStrSerializer):
@@ -617,18 +773,148 @@ class Proof(namedtuple('Proof', 'primaryProof, nonRevocProof'),
             nonRevocProof = NonRevocProof.fromStrDict(d['nonRevocProof'])
         return Proof(primaryProof=primaryProof, nonRevocProof=nonRevocProof)
 
+    def to_str_dict(self):
+        return {
+            'primaryProof': self.primaryProof.to_str_dict()
+        }
 
-class FullProof(namedtuple('FullProof', 'cHash, schemaKeys, proofs, CList'),
+    @classmethod
+    def from_str_dict(cls, d, n):
+        primaryProof = PrimaryProof.from_str_dict(d['primaryProof'], n)
+
+        return Proof(primaryProof=primaryProof)
+
+
+class ProofInfo(namedtuple('ProofInfo', 'proof, claim_def_seq_no, schema_seq_no'),
+                NamedTupleStrSerializer):
+    def __new__(cls, proof: Proof, claim_def_seq_no=None, schema_seq_no=None):
+        return super(ProofInfo, cls).__new__(cls, proof, claim_def_seq_no, schema_seq_no)
+
+    @classmethod
+    def fromStrDict(cls, d):
+        d = fromDictWithStrValues(d)
+        proof = Proof.fromStrDict(d['proof'])
+        result = cls(**d)
+        return result._replace(proof=proof)
+
+    def to_str_dict(self):
+        return {
+            'proof': self.proof.to_str_dict(),
+            'claim_def_seq_no': self.claim_def_seq_no,
+            'schema_seq_no': self.schema_seq_no
+        }
+
+    @classmethod
+    def from_str_dict(cls, d, n):
+        proof = Proof.from_str_dict(d['proof'], n)
+        claim_def_seq_no = d['claim_def_seq_no']
+        schema_seq_no = d['schema_seq_no']
+
+        return ProofInfo(proof=proof, claim_def_seq_no=claim_def_seq_no, schema_seq_no=schema_seq_no)
+
+
+class FullProof(namedtuple('FullProof', 'proofs, aggregatedProof, requestedProof'),
                 NamedTupleStrSerializer):
     def getCredDefs(self):
         return self.proofs.keys()
 
     @classmethod
     def fromStrDict(cls, d):
-        cHash = deserializeFromStr(d['cHash'])
-        schemaKeys = [SchemaKey.fromStrDict(v) for v in
-                      d['schemaKeys']]
-        proofs = [Proof.fromStrDict(v) for v in d['proofs']]
-        CList = [deserializeFromStr(v) for v in d['CList']]
-        return FullProof(cHash=cHash, schemaKeys=schemaKeys, proofs=proofs,
-                         CList=CList)
+        d = fromDictWithStrValues(d)
+        aggregatedProof = AggregatedProof.fromStrDict(d['aggregatedProof'])
+        requestedProof = RequestedProof.fromStrDict(d['requestedProof'])
+        proofs = {}
+
+        for k, v in d['proofs'].items():
+            proofs[k] = ProofInfo.fromStrDict(d['proofs'][k])
+
+        return FullProof(aggregatedProof=aggregatedProof, proofs=proofs, requestedProof=requestedProof)
+
+    def to_str_dict(self):
+        proofs = {}
+        for p in self.proofs:
+            proofs[p] = self.proofs[p].to_str_dict()
+
+        return {
+            'aggregatedProof': self.aggregatedProof.to_str_dict(),
+            'proofs': proofs,
+            'requestedProof': self.requestedProof.to_str_dict()
+        }
+
+    @classmethod
+    def from_str_dict(cls, d, n):
+        aggregatedProof = AggregatedProof.from_str_dict(d['aggregatedProof'])
+        requestedProof = RequestedProof.from_str_dict(d['requestedProof'])
+        proofs = {}
+
+        for k in d['proofs']:
+            proofs[k] = Proof.from_str_dict(d['proofs'][k]['proof'], n)
+
+        return FullProof(aggregatedProof=aggregatedProof, requestedProof=requestedProof, proofs=proofs)
+
+
+class AggregatedProof(namedtuple('AggregatedProof', 'cHash, CList'),
+                      NamedTupleStrSerializer):
+    def to_str_dict(self):
+        return {
+            'cHash': str(self.cHash),
+            'CList': [intToArrayBytes(v) for v in self.CList if isCryptoInteger(v)]
+        }
+
+    @classmethod
+    def from_str_dict(cls, d):
+        cHash = int(d['cHash'])
+        CList = [bytesToInt(v) for v in d['CList']]
+        return AggregatedProof(cHash=cHash, CList=CList)
+
+
+class RequestedProof(namedtuple('RequestedProof', 'revealed_attrs, unrevealed_attrs, self_attested_attrs, predicates'),
+                     NamedTupleStrSerializer):
+    def __new__(cls, revealed_attrs=None, unrevealed_attrs=None, self_attested_attrs=None, predicates=None):
+        return super(RequestedProof, cls).__new__(cls, revealed_attrs or {}, unrevealed_attrs or {},
+                                                  self_attested_attrs or {}, predicates or {})
+
+    @classmethod
+    def fromStrDict(cls, d):
+        revealed_attrs = {}
+        predicates = {}
+
+        for k, v in d['revealed_attrs'].items():
+            revealed_attrs[k] = [d['revealed_attrs'][k][0], d['revealed_attrs'][k][1], d['revealed_attrs'][k][2]]
+
+        for k, v in d['predicates'].items():
+            predicates[k] = d['predicates'][k]
+
+        return RequestedProof(revealed_attrs=revealed_attrs, predicates=predicates)
+
+    def to_str_dict(self):
+        return {
+            'revealed_attrs': self.revealed_attrs,
+            'unrevealed_attrs': self.unrevealed_attrs,
+            'self_attested_attrs': self.self_attested_attrs,
+            'predicates': self.predicates
+        }
+
+    @classmethod
+    def from_str_dict(cls, d):
+        revealed_attrs = d['revealed_attrs']
+        unrevealed_attrs = d['unrevealed_attrs']
+        self_attested_attrs = d['self_attested_attrs']
+        predicates = d['predicates']
+        return RequestedProof(revealed_attrs=revealed_attrs, unrevealed_attrs=unrevealed_attrs,
+                              self_attested_attrs=self_attested_attrs, predicates=predicates)
+
+
+class AttributeValues(namedtuple('AttributeValues', 'raw, encoded'),
+                      NamedTupleStrSerializer):
+    def __new__(cls, raw=None, encoded=None):
+        return super(AttributeValues, cls).__new__(cls, raw, encoded)
+
+    def to_str_dict(self):
+        return [self.raw, str(self.encoded)]
+
+    @classmethod
+    def from_str_dict(cls, d):
+        raw = d[0]
+        encoded = int(to_crypto_int(d[1]))
+        return AttributeValues(raw=raw, encoded=encoded)

@@ -24,32 +24,29 @@ class Verifier:
     def generateNonce(self):
         return cmod.integer(cmod.randomBits(LARGE_NONCE))
 
-    async def verify(self, proofInput: ProofInput, proof: FullProof,
-                     allRevealedAttrs):
+    async def verify(self, proofInput: ProofInput, proof: FullProof):
         """
         Verifies a proof from the prover.
 
         :param proofInput: description of a proof to be presented (revealed
         attributes, predicates, timestamps for non-revocation)
         :param proof: a proof
-        :param allRevealedAttrs: values of revealed attributes (initial values, non-encoded)
         :return: True if verified successfully and false otherwise.
         """
         TauList = []
-        for schemaKey, proofItem in zip(proof.schemaKeys, proof.proofs):
-            if proofItem.nonRevocProof:
+        for (uuid, proofItem) in proof.proofs.items():
+            if proofItem.proof.nonRevocProof:
                 TauList += await self._nonRevocVerifier.verifyNonRevocation(
-                    proofInput, schemaKey, proof.cHash,
-                    proofItem.nonRevocProof)
-            if proofItem.primaryProof:
-                TauList += await self._primaryVerifier.verify(schemaKey,
-                                                              proof.cHash,
-                                                              proofItem.primaryProof,
-                                                              allRevealedAttrs)
+                    proofInput, proofItem.schema_seq_no, proof.aggregatedProof.cHash,
+                    proofItem.proof.nonRevocProof)
+            if proofItem.proof.primaryProof:
+                TauList += await self._primaryVerifier.verify(proofItem.schema_seq_no,
+                                                              proof.aggregatedProof.cHash,
+                                                              proofItem.proof.primaryProof)
 
-        CHver = self._get_hash(proof.CList, TauList, proofInput.nonce)
+        CHver = self._get_hash(proof.aggregatedProof.CList, TauList, proofInput.nonce)
 
-        return CHver == proof.cHash
+        return CHver == proof.aggregatedProof.cHash
 
     def _get_hash(self, CList, TauList, nonce):
         return get_hash_as_int(nonce,
