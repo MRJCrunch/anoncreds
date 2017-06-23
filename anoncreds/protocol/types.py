@@ -345,10 +345,6 @@ class NonRevocationClaim(
         result = cls(**d)
         return result._replace(witness=witness)
 
-    def to_str_dict(self):
-        return {
-        }
-
 
 class Claims(namedtuple('Claims', 'primaryClaim, nonRevocClaim'),
              NamedTupleStrSerializer):
@@ -366,7 +362,7 @@ class Claims(namedtuple('Claims', 'primaryClaim, nonRevocClaim'),
     def to_str_dict(self):
         return {
             'primaryClaim': self.primaryClaim.to_str_dict(),
-            'nonRevocClaim': self.nonRevocClaim.to_str_dict() if self.nonRevocClaim else None
+            'nonRevocClaim': self.nonRevocClaim.toStrDict() if self.nonRevocClaim else None
         }
 
     @classmethod
