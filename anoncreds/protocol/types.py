@@ -610,3 +610,18 @@ class FullProof(namedtuple('FullProof', 'cHash, schemaKeys, proofs, CList'),
         CList = [deserializeFromStr(v) for v in d['CList']]
         return FullProof(cHash=cHash, schemaKeys=schemaKeys, proofs=proofs,
                          CList=CList)
+
+    
+class AttributeValues(namedtuple('AttributeValues', 'raw, encoded'),
+                      NamedTupleStrSerializer):
+    def __new__(cls, raw=None, encoded=None):
+        return super(AttributeValues, cls).__new__(cls, raw, encoded)
+
+    def to_str_dict(self):
+        return [self.raw, str(self.encoded)]
+
+    @classmethod
+    def from_str_dict(cls, d):
+        raw = d[0]
+        encoded = int(to_crypto_int(d[1]))
+        return AttributeValues(raw=raw, encoded=encoded)

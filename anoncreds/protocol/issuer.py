@@ -7,7 +7,7 @@ from anoncreds.protocol.revocation.accumulators.non_revocation_claim_issuer impo
     NonRevocationClaimIssuer
 from anoncreds.protocol.types import PrimaryClaim, NonRevocationClaim, \
     Schema, ID, Claims, ClaimRequest, Attribs, PublicKey, \
-    RevocationPublicKey, AccumulatorPublicKey
+    RevocationPublicKey, AccumulatorPublicKey, AttributeValues
 from anoncreds.protocol.utils import strToInt, get_hash_as_int
 from anoncreds.protocol.wallet.issuer_wallet import IssuerWallet
 from config.config import cmod
@@ -97,7 +97,7 @@ class Issuer:
 
     async def issueClaim(self, schemaId: ID, claimRequest: ClaimRequest,
                          iA=None,
-                         i=None) -> (Claims, Dict[str, Sequence[str]]):
+                         i=None) -> (Claims, Dict[str, AttributeValues]):
         """
         Issue a claim for the given user and schema.
 
