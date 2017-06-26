@@ -200,11 +200,8 @@ class PublicKey(namedtuple('PublicKey', 'N, Rms, Rctxt, R, S, Z, seqId'),
             'rms': str(crypto_int_to_str(self.Rms)),
             'rctxt': str(crypto_int_to_str(self.Rctxt)),
             'z': str(crypto_int_to_str(self.Z)),
-            'r': {}
+            'r': {k: str(crypto_int_to_str(v)) for k, v in self.R.items()}
         }
-
-        for key in self.R:
-            public_key['r'][key] = str(crypto_int_to_str(self.R[key]))
 
         return public_key
 
@@ -215,10 +212,7 @@ class PublicKey(namedtuple('PublicKey', 'N, Rms, Rctxt, R, S, Z, seqId'),
         Rctxt = to_crypto_int(data['rctxt'], data['n'])
         S = to_crypto_int(data['s'], data['n'])
         Z = to_crypto_int(data['z'], data['n'])
-        R = {}
-
-        for key in data['r']:
-            R[key] = to_crypto_int(data['r'][key], data['n'])
+        R = {k: to_crypto_int(v, data['n']) for k, v in data['r'].items()}
 
         return cls(N, Rms, Rctxt, R, S, Z)
 
@@ -434,45 +428,23 @@ class ProofInput(
     @classmethod
     def fromStrDict(cls, d):
         d = fromDictWithStrValues(d)
-        revealedAttrs = {}
-        for k, v in d['revealedAttrs'].items():
-            revealedAttrs[k] = AttributeInfo.fromStrDict(d['revealedAttrs'][k])
-
-        predicates = {}
-        for k, v in d['predicates'].items():
-            predicates[k] = Predicate.fromStrDict(d['predicates'][k])
-
+        revealedAttrs = {k: AttributeInfo.fromStrDict(v) for k, v in d['revealedAttrs'].items()}
+        predicates = {k: Predicate.fromStrDict(v) for k, v in d['predicates'].items()}
         result = cls(**d)
         return result._replace(revealedAttrs=revealedAttrs, predicates=predicates)
 
     def to_str_dict(self):
-
-        revealedAttrs = {}
-        for k, v in self.revealedAttrs.items():
-            revealedAttrs[k] = v.to_str_dict()
-
-        predicates = {}
-        for k, v in self.predicates.items():
-            predicates[k] = v.to_str_dict()
-
         return {
             'nonce': str(self.nonce),
-            'revealedAttrs': revealedAttrs,
-            'predicates': predicates
+            'revealedAttrs': {k: v.to_str_dict() for k, v in self.revealedAttrs.items()},
+            'predicates': {k: v.to_str_dict() for k, v in self.predicates.items()}
         }
 
     @classmethod
     def from_str_dict(cls, d):
         nonce = int(d['nonce'])
-
-        revealedAttrs = {}
-        for k, v in d['revealedAttrs'].items():
-            revealedAttrs[k] = AttributeInfo.from_str_dict(d['revealedAttrs'][k])
-
-            predicates = {}
-        for k, v in d['predicates'].items():
-            predicates[k] = Predicate.from_str_dict(d['predicates'][k])
-
+        revealedAttrs = {k: AttributeInfo.from_str_dict(v) for k, v in d['revealedAttrs'].items()}
+        predicates = {k: Predicate.from_str_dict(v) for k, v in d['predicates'].items()}
         return ProofInput(nonce=nonce, revealedAttrs=revealedAttrs, predicates=predicates)
 
 
@@ -634,23 +606,15 @@ class PrimaryEqualProof(namedtuple('PrimaryEqualProof',
     pass
 
     def to_str_dict(self):
-        primaryEqualProof = {
+        return {
             'e': str(crypto_int_to_str(self.e)),
             'v': str(crypto_int_to_str(self.v)),
             'm1': str(crypto_int_to_str(self.m1)),
             'm2': str(crypto_int_to_str(self.m2)),
-            'm': {},
-            'revealedAttrs': {},
+            'm': {k: str(crypto_int_to_str(v)) for k, v in self.m.items()},
+            'revealedAttrs': {k: str(v) for k, v in self.revealedAttrs.items()},
             'Aprime': str(crypto_int_to_str(self.Aprime))
         }
-
-        for key in self.m:
-            primaryEqualProof['m'][key] = str(crypto_int_to_str(self.m[key]))
-
-        for key in self.revealedAttrs:
-            primaryEqualProof['revealedAttrs'][key] = str(self.revealedAttrs[key])
-
-        return primaryEqualProof
 
     @classmethod
     def from_str_dict(cls, d, n):
@@ -659,14 +623,8 @@ class PrimaryEqualProof(namedtuple('PrimaryEqualProof',
         m1 = to_crypto_int(d['m1'])
         m2 = to_crypto_int(d['m2'])
         Aprime = to_crypto_int(d['Aprime'], str(n))
-        revealedAttrs = {}
-        m = {}
-
-        for k in d['m']:
-            m[k] = to_crypto_int(d['m'][k])
-
-        for k in d['revealedAttrs']:
-            revealedAttrs[k] = to_crypto_int(d['revealedAttrs'][k])
+        revealedAttrs = {k: to_crypto_int(v) for k, v in d['revealedAttrs'].items()}
+        m = {k: to_crypto_int(v) for k, v in d['m'].items()}
 
         return PrimaryEqualProof(e=e, v=v, m1=m1, m2=m2, m=m, Aprime=Aprime, revealedAttrs=revealedAttrs)
 
@@ -682,43 +640,23 @@ class PrimaryPredicateGEProof(
         return result._replace(predicate=predicate)
 
     def to_str_dict(self):
-        primaryPredicateGEProof = {
+        return {
             'alpha': str(crypto_int_to_str(self.alpha)),
             'mj': str(crypto_int_to_str(self.mj)),
-            'u': {},
-            'r': {},
-            'T': {},
+            'u': {k: str(crypto_int_to_str(v)) for k, v in self.u.items()},
+            'r': {k: str(crypto_int_to_str(v)) for k, v in self.r.items()},
+            'T': {k: str(crypto_int_to_str(v)) for k, v in self.T.items()},
             'predicate': self.predicate.to_str_dict()
         }
-
-        for key in self.u:
-            primaryPredicateGEProof['u'][key] = str(crypto_int_to_str(self.u[key]))
-
-        for key in self.r:
-            primaryPredicateGEProof['r'][key] = str(crypto_int_to_str(self.r[key]))
-
-        for key in self.T:
-            primaryPredicateGEProof['T'][key] = str(crypto_int_to_str(self.T[key]))
-
-        return primaryPredicateGEProof
 
     @classmethod
     def from_str_dict(cls, d, n):
         alpha = to_crypto_int(d['alpha'])
         mj = to_crypto_int(d['mj'])
-        u = {}
-        r = {}
-        T = {}
+        u = {k: to_crypto_int(v) for k, v in d['u'].items()}
+        r = {k: to_crypto_int(v) for k, v in d['r'].items()}
+        T = {k: to_crypto_int(v, str(n)) for k, v in d['T'].items()}
         predicate = PredicateGE.from_str_dict(d['predicate'])
-
-        for k in d['u']:
-            u[k] = to_crypto_int(d['u'][k])
-
-        for k in d['r']:
-            r[k] = to_crypto_int(d['r'][k])
-
-        for k in d['T']:
-            T[k] = to_crypto_int(d['T'][k], str(n))
 
         return PrimaryPredicateGEProof(alpha=alpha, mj=mj, u=u, r=r, T=T, predicate=predicate)
 
@@ -823,21 +761,14 @@ class FullProof(namedtuple('FullProof', 'proofs, aggregatedProof, requestedProof
         d = fromDictWithStrValues(d)
         aggregatedProof = AggregatedProof.fromStrDict(d['aggregatedProof'])
         requestedProof = RequestedProof.fromStrDict(d['requestedProof'])
-        proofs = {}
-
-        for k, v in d['proofs'].items():
-            proofs[k] = ProofInfo.fromStrDict(d['proofs'][k])
+        proofs = {k: ProofInfo.fromStrDict(v) for k, v in d['proofs'].items()}
 
         return FullProof(aggregatedProof=aggregatedProof, proofs=proofs, requestedProof=requestedProof)
 
     def to_str_dict(self):
-        proofs = {}
-        for p in self.proofs:
-            proofs[p] = self.proofs[p].to_str_dict()
-
         return {
             'aggregatedProof': self.aggregatedProof.to_str_dict(),
-            'proofs': proofs,
+            'proofs': {k: v.to_str_dict() for k, v in self.proofs.items()},
             'requestedProof': self.requestedProof.to_str_dict()
         }
 
@@ -845,10 +776,7 @@ class FullProof(namedtuple('FullProof', 'proofs, aggregatedProof, requestedProof
     def from_str_dict(cls, d, n):
         aggregatedProof = AggregatedProof.from_str_dict(d['aggregatedProof'])
         requestedProof = RequestedProof.from_str_dict(d['requestedProof'])
-        proofs = {}
-
-        for k in d['proofs']:
-            proofs[k] = Proof.from_str_dict(d['proofs'][k]['proof'], n)
+        proofs = {k: Proof.from_str_dict(v['proof'], n) for k, v in d['proofs']}
 
         return FullProof(aggregatedProof=aggregatedProof, requestedProof=requestedProof, proofs=proofs)
 
@@ -876,15 +804,8 @@ class RequestedProof(namedtuple('RequestedProof', 'revealed_attrs, unrevealed_at
 
     @classmethod
     def fromStrDict(cls, d):
-        revealed_attrs = {}
-        predicates = {}
-
-        for k, v in d['revealed_attrs'].items():
-            revealed_attrs[k] = [d['revealed_attrs'][k][0], d['revealed_attrs'][k][1], d['revealed_attrs'][k][2]]
-
-        for k, v in d['predicates'].items():
-            predicates[k] = d['predicates'][k]
-
+        revealed_attrs = {k: [v[0], v[1], v[2]] for k, v in d['revealed_attrs'].items()}
+        predicates = {k: v for k, v in d['predicates'].items()}
         return RequestedProof(revealed_attrs=revealed_attrs, predicates=predicates)
 
     def to_str_dict(self):

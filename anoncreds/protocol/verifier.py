@@ -33,6 +33,15 @@ class Verifier:
         :param proof: a proof
         :return: True if verified successfully and false otherwise.
         """
+
+        if proofInput.revealedAttrs.keys() != proof.requestedProof.revealed_attrs.keys():
+            raise ValueError('Received attributes ={} do not correspond to requested={}'.format(
+                proofInput.revealedAttrs.keys(), proof.requestedProof.revealed_attrs.keys()))
+
+        if proofInput.predicates.keys() != proof.requestedProof.predicates.keys():
+            raise ValueError('Received predicates ={} do not correspond to requested={}'.format(
+                proofInput.predicates.keys(), proof.requestedProof.predicates.keys()))
+
         TauList = []
         for (uuid, proofItem) in proof.proofs.items():
             if proofItem.proof.nonRevocProof:

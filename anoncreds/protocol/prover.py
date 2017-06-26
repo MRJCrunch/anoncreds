@@ -173,9 +173,11 @@ class Prover:
         for uuid, revealedAttr in revealedAttrs.items():
             claim = None
             for schemaKey, c in allClaims.items():
-                if revealedAttr.name in c:
+                schemaId = (await self.wallet.getSchema(ID(schemaKey))).seqId
+
+                if revealedAttr.name in c and (
+                            schemaId == revealedAttr.schema_seq_no if revealedAttr.schema_seq_no else True):
                     claim = c
-                    schemaId = (await self.wallet.getSchema(ID(schemaKey))).seqId
                     foundRevealedAttrs[uuid] = [str(schemaId), str(claim[revealedAttr.name].raw),
                                                 str(claim[revealedAttr.name].encoded)]
 
