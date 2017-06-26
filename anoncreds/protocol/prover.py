@@ -10,7 +10,7 @@ from anoncreds.protocol.revocation.accumulators.non_revocation_proof_builder imp
 from anoncreds.protocol.types import PrimaryClaim, NonRevocationClaim, Proof, \
     InitProof, ProofInput, ProofClaims, \
     FullProof, \
-    Schema, ID, SchemaKey, ClaimRequest, Claims
+    Schema, ID, SchemaKey, ClaimRequest, Claims, AttributeValues
 from anoncreds.protocol.utils import get_hash_as_int
 from anoncreds.protocol.wallet.prover_wallet import ProverWallet
 from config.config import cmod
@@ -72,7 +72,7 @@ class Prover:
                                                           reqNonRevoc)
         return res
 
-    async def processClaim(self, schemaId: ID, claims: Dict[str, Sequence[str]], signature: Claims):
+    async def processClaim(self, schemaId: ID, claims:  Dict[str, AttributeValues], signature: Claims):
         """
         Processes and saves a received Claim for the given Schema.
 
@@ -124,14 +124,14 @@ class Prover:
     async def _genU(self, schemaId: ID):
         claimInitData = await self._primaryClaimInitializer.genClaimInitData(
             schemaId)
-        await self.wallet.submitPrimaryClaimInitData(schemaId=schemaId,
+        await self.wallet.submitPrimaryClaimSignatureInitData(schemaId=schemaId,
                                                      claimInitData=claimInitData)
         return claimInitData.U
 
     async def _genUr(self, schemaId: ID):
         claimInitData = await self._nonRevocClaimInitializer.genClaimInitData(
             schemaId)
-        await self.wallet.submitNonRevocClaimInitData(schemaId=schemaId,
+        await self.wallet.submitNonRevocClaimSignatureInitData(schemaId=schemaId,
                                                       claimInitData=claimInitData)
         return claimInitData.U
 
@@ -139,14 +139,14 @@ class Prover:
         claim = await self._primaryClaimInitializer.preparePrimaryClaim(
             schemaId,
             claim)
-        await self.wallet.submitPrimaryClaim(schemaId=schemaId, claim=claim)
+        await self.wallet.submitPrimaryClaimSignature(schemaId=schemaId, claim=claim)
 
     async def _initNonRevocationClaim(self, schemaId: ID,
                                       claim: NonRevocationClaim):
         claim = await self._nonRevocClaimInitializer.initNonRevocationClaim(
             schemaId,
             claim)
-        await self.wallet.submitNonRevocClaim(schemaId=schemaId,
+        await self.wallet.submitNonRevocClaimSignature(schemaId=schemaId,
                                               claim=claim)
 
     #

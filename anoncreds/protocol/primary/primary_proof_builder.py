@@ -8,7 +8,7 @@ from anoncreds.protocol.primary.primary_proof_common import calcTge, calcTeq
 from anoncreds.protocol.types import PrimaryClaim, Predicate, PrimaryInitProof, \
     PrimaryEqualInitProof, PrimaryPrecicateGEInitProof, PrimaryProof, \
     PrimaryEqualProof, PrimaryPredicateGEProof, \
-    ID, ClaimInitDataType
+    ID, ClaimInitDataType, AttributeValues
 from anoncreds.protocol.utils import getUnrevealedAttrs, fourSquares
 from anoncreds.protocol.wallet.prover_wallet import ProverWallet
 from config.config import cmod
@@ -43,7 +43,7 @@ class PrimaryProofBuilder:
     async def initProof(self, schemaKey, c1: PrimaryClaim,
                         revealedAttrs: Sequence[str],
                         predicates: Sequence[Predicate],
-                        m1Tilde, m2Tilde, attrs: Dict[str, Sequence[str]]) -> PrimaryInitProof:
+                        m1Tilde, m2Tilde, attrs: Dict[str, AttributeValues]) -> PrimaryInitProof:
         if not c1:
             return None
 
@@ -72,7 +72,7 @@ class PrimaryProofBuilder:
         return PrimaryProof(eqProof, geProofs)
 
     async def _initEqProof(self, schemaKey, c1: PrimaryClaim,
-                           revealedAttrs: Sequence[str], m1Tilde, m2Tilde, attrs: Dict[str, Sequence[str]]) \
+                           revealedAttrs: Sequence[str], m1Tilde, m2Tilde, attrs: Dict[str, AttributeValues]) \
             -> PrimaryEqualInitProof:
         m2Tilde = m2Tilde if m2Tilde else cmod.integer(
             cmod.randomBits(LARGE_MVECT))
@@ -106,12 +106,12 @@ class PrimaryProofBuilder:
                                      unrevealedAttrs.keys(), revealedAttrs)
 
     async def _initGeProof(self, schemaKey, eqProof: PrimaryEqualInitProof,
-                           c1: PrimaryClaim, predicate: Predicate, attrs: Dict[str, Sequence[str]]) \
+                           c1: PrimaryClaim, predicate: Predicate, claim: Dict[str, AttributeValues]) \
             -> PrimaryPrecicateGEInitProof:
         # gen U for Delta
         pk = await self._wallet.getPublicKey(ID(schemaKey))
         k, value = predicate.attrName, predicate.value
-        delta = int(attrs[k][1]) - value
+        delta = claim[k].encoded - value
         if delta < 0:
             raise ValueError("Predicate is not satisfied")
 
@@ -149,12 +149,11 @@ class PrimaryProofBuilder:
 
         m = {}
 
-        schema = await self._wallet.getSchema(ID(schemaKey))
-        attrs = await self._wallet.getClaim(ID(schemaKey=schemaKey, schemaId=schema.seqId))
+        claim = await self._wallet.getClaim(ID(schemaKey))
 
         for k in initProof.unrevealedAttrs:
             m[str(k)] = initProof.mTilde[str(k)] + (
-                cH * int(attrs[str(k)][1]))
+                cH * claim[str(k)].encoded)
         ms = await self._wallet.getMasterSecret(ID(schemaKey))
         m1 = initProof.m1Tilde + (cH * ms)
         m2 = initProof.m2Tilde + (cH * initProof.c1.m2)

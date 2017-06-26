@@ -7,9 +7,9 @@ from anoncreds.test.conftest import presentProofAndVerify
 
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
 @pytest.mark.asyncio
-async def testIssueRevocationCredential(claimsProver1Gvt, issuerGvt,
+async def testIssueRevocationCredential(claimSignatureProver1Gvt, issuerGvt,
                                         schemaGvtId):
-    nonRevocClaimGvtProver1 = claimsProver1Gvt.nonRevocClaim
+    nonRevocClaimGvtProver1 = claimSignatureProver1Gvt.nonRevocClaim
     acc = await issuerGvt.wallet.getAccumulator(schemaGvtId)
     tails = await issuerGvt.wallet.getTails(schemaGvtId)
     assert nonRevocClaimGvtProver1
@@ -26,7 +26,7 @@ async def testIssueRevocationCredential(claimsProver1Gvt, issuerGvt,
 
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
 @pytest.mark.asyncio
-async def testRevoce(claimsProver1Gvt, issuerGvt, schemaGvtId):
+async def testRevoce(claimSignatureProver1Gvt, issuerGvt, schemaGvtId):
     await issuerGvt.revoke(schemaGvtId, 1)
     newAcc = await issuerGvt.wallet.getAccumulator(schemaGvtId)
     assert not newAcc.V
@@ -35,9 +35,9 @@ async def testRevoce(claimsProver1Gvt, issuerGvt, schemaGvtId):
 
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
 @pytest.mark.asyncio
-async def testUpdateWitnessNotChangedIfInSync(claimsProver1Gvt, schemaGvtId,
+async def testUpdateWitnessNotChangedIfInSync(claimSignatureProver1Gvt, schemaGvtId,
                                               prover1):
-    nonRevocClaimGvtProver1 = claimsProver1Gvt.nonRevocClaim
+    nonRevocClaimGvtProver1 = claimSignatureProver1Gvt.nonRevocClaim
     acc = await prover1.wallet.getAccumulator(schemaGvtId)
 
     # not changed as in sync
@@ -52,9 +52,9 @@ async def testUpdateWitnessNotChangedIfInSync(claimsProver1Gvt, schemaGvtId,
 
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
 @pytest.mark.asyncio
-async def testUpdateWitnessChangedIfOutOfSync(claimsProver1Gvt, issuerGvt,
+async def testUpdateWitnessChangedIfOutOfSync(claimSignatureProver1Gvt, issuerGvt,
                                               schemaGvtId, prover1):
-    nonRevocClaimGvtProver1 = claimsProver1Gvt.nonRevocClaim
+    nonRevocClaimGvtProver1 = claimSignatureProver1Gvt.nonRevocClaim
     acc = await issuerGvt.wallet.getAccumulator(schemaGvtId)
 
     # not in sync
@@ -72,9 +72,9 @@ async def testUpdateWitnessChangedIfOutOfSync(claimsProver1Gvt, issuerGvt,
 
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
 @pytest.mark.asyncio
-async def testUpdateRevocedWitness(claimsProver1Gvt, issuerGvt, schemaGvtId,
+async def testUpdateRevocedWitness(claimSignatureProver1Gvt, issuerGvt, schemaGvtId,
                                    prover1):
-    nonRevocClaimGvtProver1 = claimsProver1Gvt.nonRevocClaim
+    nonRevocClaimGvtProver1 = claimSignatureProver1Gvt.nonRevocClaim
     await issuerGvt.revoke(schemaGvtId, 1)
     with pytest.raises(ValueError):
         await prover1._nonRevocProofBuilder.updateNonRevocationClaim(
@@ -99,8 +99,8 @@ async def testInitNonRevocClaim(schemaGvtId, prover1, issuerGvt,
 
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
 @pytest.mark.asyncio
-async def testCAndTauList(claimsProver1Gvt, schemaGvtId, prover1):
-    nonRevocClaimGvtProver1 = claimsProver1Gvt.nonRevocClaim
+async def testCAndTauList(claimSignatureProver1Gvt, schemaGvtId, prover1):
+    nonRevocClaimGvtProver1 = claimSignatureProver1Gvt.nonRevocClaim
     proofRevBuilder = prover1._nonRevocProofBuilder
     assert await proofRevBuilder.testProof(schemaGvtId.schemaKey,
                                            nonRevocClaimGvtProver1)
@@ -109,7 +109,7 @@ async def testCAndTauList(claimsProver1Gvt, schemaGvtId, prover1):
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
 @pytest.mark.asyncio
 async def testRevocedWithUpdateWitness(schemaGvtId, issuerGvt, prover1,
-                                       verifier, claimsProver1Gvt):
+                                       verifier, claimSignatureProver1Gvt):
     await issuerGvt.revoke(schemaGvtId, 1)
 
     proofInput = ProofInput(['name'], [])
@@ -120,7 +120,7 @@ async def testRevocedWithUpdateWitness(schemaGvtId, issuerGvt, prover1,
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
 @pytest.mark.asyncio
 async def testRevocedWithoutUpdateWitness(schemaGvtId, issuerGvt, prover1,
-                                          verifier, claimsProver1Gvt):
+                                          verifier, claimSignatureProver1Gvt):
     proofInput = ProofInput(['name'], [])
     nonce = verifier.generateNonce()
     proof, revealedAttrs = await prover1.presentProof(proofInput, nonce)

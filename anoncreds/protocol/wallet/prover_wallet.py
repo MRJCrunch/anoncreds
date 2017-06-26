@@ -19,11 +19,11 @@ class ProverWallet(Wallet):
         raise NotImplementedError
 
     @abstractmethod
-    async def submitPrimaryClaim(self, schemaId: ID, claim: PrimaryClaim):
+    async def submitPrimaryClaimSignature(self, schemaId: ID, claim: PrimaryClaim):
         raise NotImplementedError
 
     @abstractmethod
-    async def submitNonRevocClaim(self, schemaId: ID,
+    async def submitNonRevocClaimSignature(self, schemaId: ID,
                                   claim: NonRevocationClaim):
         raise NotImplementedError
 
@@ -32,12 +32,12 @@ class ProverWallet(Wallet):
         raise NotImplementedError
 
     @abstractmethod
-    async def submitPrimaryClaimInitData(self, schemaId: ID,
+    async def submitPrimaryClaimSignatureInitData(self, schemaId: ID,
                                          claimInitData: ClaimInitDataType):
         raise NotImplementedError
 
     @abstractmethod
-    async def submitNonRevocClaimInitData(self, schemaId: ID,
+    async def submitNonRevocClaimSignatureInitData(self, schemaId: ID,
                                           claimInitData: ClaimInitDataType):
         raise NotImplementedError
 
@@ -95,22 +95,22 @@ class ProverWalletInMemory(ProverWallet, WalletInMemory):
     async def submitClaim(self, schemaId: ID, claims: Dict[str, Sequence[str]]):
         await self._cacheValueForId(self._claims, schemaId, claims)
 
-    async def submitPrimaryClaim(self, schemaId: ID, claim: PrimaryClaim):
+    async def submitPrimaryClaimSignature(self, schemaId: ID, claim: PrimaryClaim):
         await self._cacheValueForId(self._c1s, schemaId, claim)
 
-    async def submitNonRevocClaim(self, schemaId: ID,
+    async def submitNonRevocClaimSignature(self, schemaId: ID,
                                   claim: NonRevocationClaim):
         await self._cacheValueForId(self._c2s, schemaId, claim)
 
     async def submitMasterSecret(self, ms, schemaId: ID):
         await self._cacheValueForId(self._m1s, schemaId, ms)
 
-    async def submitPrimaryClaimInitData(self, schemaId: ID,
+    async def submitPrimaryClaimSignatureInitData(self, schemaId: ID,
                                          claimInitData: ClaimInitDataType):
         await self._cacheValueForId(self._primaryInitData, schemaId,
                                     claimInitData)
 
-    async def submitNonRevocClaimInitData(self, schemaId: ID,
+    async def submitNonRevocClaimSignatureInitData(self, schemaId: ID,
                                           claimInitData: ClaimInitDataType):
         await self._cacheValueForId(self._nonRevocInitData, schemaId,
                                     claimInitData)

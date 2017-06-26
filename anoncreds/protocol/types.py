@@ -317,7 +317,7 @@ class PrimaryClaim(namedtuple('PrimaryClaim', 'm2, A, e, v'), NamedTupleStrSeria
             'm2': str(crypto_int_to_str(self.m2)),
             'a': str(crypto_int_to_str(self.A)),
             'e': str(self.e),
-            'v': str(self.v)
+            'v': str(crypto_int_to_str(self.v))
         }
 
     @classmethod
@@ -325,7 +325,7 @@ class PrimaryClaim(namedtuple('PrimaryClaim', 'm2, A, e, v'), NamedTupleStrSeria
         m2 = to_crypto_int(data['m2'])
         a = to_crypto_int(data['a'], str(n))
         e = int(data['e'])
-        v = int(data['v'])
+        v = to_crypto_int(data['v'])
 
         return cls(m2=m2, A=a, e=e, v=v)
 

@@ -209,11 +209,21 @@ def claimsProver1Gvt(prover1, issuerGvt, claimsRequestProver1Gvt, schemaGvtId,
         issuerGvt.issueClaim(schemaGvtId, claimsRequestProver1Gvt))
     event_loop.run_until_complete(prover1.processClaim(schemaGvtId, claims, signature))
     return event_loop.run_until_complete(
+        prover1.wallet.getClaim(schemaGvtId))
+
+
+@pytest.fixture(scope="function")
+def claimSignatureProver1Gvt(prover1, issuerGvt, claimsRequestProver1Gvt, schemaGvtId,
+                     attrsProver1Gvt, event_loop):
+    (signature, claims) = event_loop.run_until_complete(
+        issuerGvt.issueClaim(schemaGvtId, claimsRequestProver1Gvt))
+    event_loop.run_until_complete(prover1.processClaim(schemaGvtId, claims, signature))
+    return event_loop.run_until_complete(
         prover1.wallet.getClaimSignature(schemaGvtId))
 
 
 @pytest.fixture(scope="function")
-def claimsProver2Gvt(prover2, issuerGvt, schemaGvtId, attrsProver2Gvt,
+def claimSignatureProver2Gvt(prover2, issuerGvt, schemaGvtId, attrsProver2Gvt,
                      keysGvt, issueAccumulatorGvt, event_loop):
     claimsReq = event_loop.run_until_complete(
         prover2.createClaimRequest(schemaGvtId))
@@ -225,7 +235,7 @@ def claimsProver2Gvt(prover2, issuerGvt, schemaGvtId, attrsProver2Gvt,
 
 
 @pytest.fixture(scope="function")
-def claimsProver1Xyz(prover1, issuerXyz, schemaXyzId, attrsProver1Xyz,
+def claimSignatureProver1Xyz(prover1, issuerXyz, schemaXyzId, attrsProver1Xyz,
                      keysXyz, issueAccumulatorXyz, event_loop):
     claimsReq = event_loop.run_until_complete(
         prover1.createClaimRequest(schemaXyzId))
@@ -237,7 +247,7 @@ def claimsProver1Xyz(prover1, issuerXyz, schemaXyzId, attrsProver1Xyz,
 
 
 @pytest.fixture(scope="function")
-def claimsProver2Xyz(prover2, issuerXyz, schemaXyzId, attrsProver2Xyz,
+def claimSignatureProver2Xyz(prover2, issuerXyz, schemaXyzId, attrsProver2Xyz,
                      keysXyz, issueAccumulatorXyz, event_loop):
     claimsReq = event_loop.run_until_complete(
         prover2.createClaimRequest(schemaXyzId))
@@ -249,13 +259,13 @@ def claimsProver2Xyz(prover2, issuerXyz, schemaXyzId, attrsProver2Xyz,
 
 
 @pytest.fixture(scope="function")
-def claimsProver1(claimsProver1Gvt, claimsProver1Xyz):
-    return claimsProver1Gvt, claimsProver1Xyz
+def claimsProver1(claimSignatureProver1Gvt, claimSignatureProver1Xyz):
+    return claimSignatureProver1Gvt, claimSignatureProver1Xyz
 
 
 @pytest.fixture(scope="function")
-def claimsProver2(claimsProver2Gvt, claimsProver2Xyz):
-    return claimsProver2Gvt, claimsProver2Xyz
+def claimsProver2(claimSignatureProver2Gvt, claimSignatureProver2Xyz):
+    return claimSignatureProver2Gvt, claimSignatureProver2Xyz
 
 
 @pytest.fixture(scope="function")

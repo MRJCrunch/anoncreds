@@ -97,7 +97,7 @@ class NonRevocationProofBuilder:
             newWitness = c2.witness._replace(V=newV, omega=newOmega)
             c2 = c2._replace(witness=newWitness)
 
-            await self._wallet.submitNonRevocClaim(schemaId=ID(schemaKey),
+            await self._wallet.submitNonRevocClaimSignature(schemaId=ID(schemaKey),
                                                    claim=c2)
 
         return c2

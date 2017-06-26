@@ -159,7 +159,7 @@ class Issuer:
         return m2
 
     async def _issuePrimaryClaim(self, schemaId: ID, attributes: Attribs,
-                                 U) -> (PrimaryClaim, Dict[str, Sequence[str]]):
+                                 U) -> (PrimaryClaim, Dict[str, AttributeValues]):
         return await self._primaryIssuer.issuePrimaryClaim(schemaId,
                                                            attributes, U)
 

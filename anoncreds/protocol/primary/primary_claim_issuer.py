@@ -1,7 +1,7 @@
 from anoncreds.protocol.globals import LARGE_VPRIME_PRIME, LARGE_E_START, \
     LARGE_E_END_RANGE, LARGE_PRIME
 from anoncreds.protocol.types import PublicKey, SecretKey, PrimaryClaim, ID, \
-    Attribs
+    Attribs, AttributeValues
 from anoncreds.protocol.utils import get_prime_in_range, strToCryptoInteger, \
     randomQR
 from anoncreds.protocol.wallet.issuer_wallet import IssuerWallet
@@ -74,7 +74,7 @@ class PrimaryClaimIssuer:
         return prime
 
     async def issuePrimaryClaim(self, schemaId: ID, attributes: Attribs,
-                                U) -> (PrimaryClaim, Dict[str, Sequence[str]]):
+                                U) -> (PrimaryClaim, Dict[str, AttributeValues]):
         u = strToCryptoInteger(U) if isinstance(U, str) else U
 
         if not u:
@@ -94,7 +94,7 @@ class PrimaryClaimIssuer:
         attrs = dict()
 
         for key in attributes.keys():
-            attrs[key] = (str(attributes._vals[key]), str(encodedAttrs[key]))
+            attrs[key] = AttributeValues(attributes._vals[key], encodedAttrs[key])
 
         return (PrimaryClaim(m2, A, e, vprimeprime), attrs)
 

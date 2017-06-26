@@ -2,7 +2,7 @@ import pytest
 
 from anoncreds.protocol.types import PublicKey, Schema, Claims, \
     ProofInput, PredicateGE, FullProof, \
-    SchemaKey, ClaimRequest, Proof, PrimaryClaim
+    SchemaKey, ClaimRequest, Proof, PrimaryClaim, AttributeValues
 from anoncreds.protocol.utils import toDictWithStrValues, fromDictWithStrValues
 from config.config import cmod
 
@@ -98,19 +98,19 @@ def testRequestClaimsFromToDict(claimsRequestProver1Gvt):
 
 
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
-def testClaimsFromToDict(claimsProver1Gvt):
-    assert claimsProver1Gvt == Claims.fromStrDict(claimsProver1Gvt.toStrDict())
+def testClaimsFromToDict(claimSignatureProver1Gvt):
+    assert claimSignatureProver1Gvt == Claims.fromStrDict(claimSignatureProver1Gvt.toStrDict())
 
 
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
-def testClaimsFromToDictPrimaryOnly(claimsProver1Gvt):
-    claims = Claims(primaryClaim=claimsProver1Gvt.primaryClaim)
+def testClaimsFromToDictPrimaryOnly(claimSignatureProver1Gvt):
+    claims = Claims(primaryClaim=claimSignatureProver1Gvt.primaryClaim)
     assert claims == Claims.fromStrDict(claims.toStrDict())
 
 
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
 @pytest.mark.asyncio
-async def testClaimProofFromToDict(prover1, nonce, claimsProver1Gvt):
+async def testClaimProofFromToDict(prover1, nonce, claimSignatureProver1Gvt):
     proofInput = ProofInput(['name'], [PredicateGE('age', 18)])
     proof, _ = await prover1.presentProof(proofInput, nonce)
     assert proof == FullProof.fromStrDict(proof.toStrDict())
@@ -118,7 +118,7 @@ async def testClaimProofFromToDict(prover1, nonce, claimsProver1Gvt):
 
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
 @pytest.mark.asyncio
-async def testClaimProofFromToDictPrimaryOnly(prover1, nonce, claimsProver1Gvt):
+async def testClaimProofFromToDictPrimaryOnly(prover1, nonce, claimSignatureProver1Gvt):
     proofInput = ProofInput(['name'], [PredicateGE('age', 18)])
     proof, _ = await prover1.presentProof(proofInput, nonce)
 
@@ -135,8 +135,21 @@ def testProofInputFromToDict():
 
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
 @pytest.mark.asyncio
-async def testRevealedAttrsFromToDict(prover1, nonce, claimsProver1Gvt):
+async def testRevealedAttrsFromToDict(prover1, nonce, claimSignatureProver1Gvt):
     proofInput = ProofInput(['name'], [PredicateGE('age', 18)])
     _, revealedAttrs = await prover1.presentProof(proofInput, nonce)
     assert revealedAttrs == fromDictWithStrValues(
         toDictWithStrValues(revealedAttrs))
+
+
+@pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
+@pytest.mark.asyncio
+async def test_attribute_values_from_to_dict():
+
+    attr_values = AttributeValues(raw='Alex', encoded=cmod.integer(11))
+
+    attr_values_serialized = ['Alex', '11']
+
+    assert attr_values.to_str_dict() == attr_values_serialized
+    assert attr_values == AttributeValues.from_str_dict(attr_values_serialized)
+    assert attr_values == AttributeValues.from_str_dict(attr_values.to_str_dict())
