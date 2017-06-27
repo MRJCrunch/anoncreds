@@ -138,8 +138,8 @@ async def testClaimProofFromToDictPrimaryOnly(prover1, nonce, claimsProver1Gvt, 
 
     proofInfo = proof.proofs[str(schemaGvt.seqId)]
     proofs = {schemaGvt.seqId: ProofInfo(Proof(primaryProof=proofInfo.proof.primaryProof),
-                                            claim_def_seq_no=proofInfo.claim_def_seq_no,
-                                            schema_seq_no=proofInfo.schema_seq_no)}
+                                         issuer_did=schemaGvt.issuerId,
+                                         schema_seq_no=proofInfo.schema_seq_no)}
     proof = proof._replace(proofs=proofs)
     assert proof == FullProof.fromStrDict(proof.toStrDict())
 
@@ -161,13 +161,13 @@ def test_proof_input_from_to_dict():
 
     proof_input_serialized = {
         'nonce': '1',
-        'revealedAttrs': {'attr_uuid': {'name': 'name', 'schema_seq_no': None}},
-        'predicates': {'predicate_uuid': {'type': 'ge', 'value': 18, 'attrName': 'age'}}
+        'revealedAttrs': {'attr_uuid': {'name': 'name', 'schema_seq_no': None, 'claim_def_seq_no': None}},
+        'predicates': {'predicate_uuid': {'type': 'ge', 'value': 18, 'attrName': 'age', 'schema_seq_no': None,
+                                          'claim_def_seq_no': None}}
     }
     assert proof_input.to_str_dict() == proof_input_serialized
     assert proof_input == ProofInput.from_str_dict(proof_input_serialized)
     assert proof_input == ProofInput.from_str_dict(proof_input.to_str_dict())
-
 
 
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
@@ -194,7 +194,6 @@ async def test_requested_proof_from_to_dict(prover1, nonce, claimsProver1Gvt):
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
 @pytest.mark.asyncio
 async def test_attribute_values_from_to_dict():
-
     attr_values = AttributeValues(raw='Alex', encoded=cmod.integer(11))
 
     attr_values_serialized = ['Alex', '11']
@@ -261,7 +260,9 @@ async def test_ge_proof_from_to_dict():
         'predicate': {
             'type': 'ge',
             'attrName': 'age',
-            'value': 18
+            'value': 18,
+            'schema_seq_no': None,
+            'claim_def_seq_no': None
         }
     }
 
@@ -304,7 +305,9 @@ async def test_primary_proof_from_to_dict():
                 'predicate': {
                     'type': 'ge',
                     'attrName': 'age',
-                    'value': 18
+                    'value': 18,
+                    'schema_seq_no': None,
+                    'claim_def_seq_no': None
                 }
             }
         ]
@@ -329,10 +332,10 @@ async def test_proof_info_from_to_dict():
                                       u={'1': cmod.integer(42)}, T={'1': cmod.integer(21) % n}, predicate=predicate)
     primaryProof = PrimaryProof(eqProof=eqProof, geProofs=[geProof])
     proofInfo = Proof(primaryProof=primaryProof)
-    proof = ProofInfo(claim_def_seq_no=1, schema_seq_no=1, proof=proofInfo)
+    proof = ProofInfo(schema_seq_no=1, proof=proofInfo, issuer_did='did')
 
     proof_serialized = {
-        'claim_def_seq_no': 1,
+        'issuer_did': 'did',
         'schema_seq_no': 1,
         'proof': {
             'primaryProof': {
@@ -355,7 +358,9 @@ async def test_proof_info_from_to_dict():
                         'predicate': {
                             'type': 'ge',
                             'attrName': 'age',
-                            'value': 18
+                            'value': 18,
+                            'schema_seq_no': None,
+                            'claim_def_seq_no': None
                         }
                     }
                 ]
@@ -380,7 +385,7 @@ async def test_proof_from_to_dict(prover1, nonce, claimsProver1Gvt, schemaGvt):
 
     proofInfo = proof.proofs[str(schemaGvt.seqId)]
     proof = ProofInfo(Proof(primaryProof=proofInfo.proof.primaryProof),
-                      claim_def_seq_no=proofInfo.claim_def_seq_no,
+                      issuer_did=schemaGvt.issuerId,
                       schema_seq_no=proofInfo.schema_seq_no)
 
     assert proof == ProofInfo.from_str_dict(proof.to_str_dict(), n)

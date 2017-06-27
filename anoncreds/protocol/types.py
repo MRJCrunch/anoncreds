@@ -147,6 +147,9 @@ class StrSerializer:
 class SchemaKey(
     namedtuple('SchemaKey', 'name, version, issuerId'),
     NamedTupleStrSerializer):
+    def __new__(cls, name=None, version=None, issuerId=None):
+        return super(SchemaKey, cls).__new__(cls, name, version, issuerId)
+
     def __hash__(self):
         keys = (self.name, self.version, self.issuerId)
         return hash(keys)
@@ -247,8 +250,11 @@ class AccumulatorSecretKey(
     pass
 
 
-class Predicate(namedtuple('Predicate', 'attrName, value, type'),
+class Predicate(namedtuple('Predicate', 'attrName, value, type, schema_seq_no, claim_def_seq_no'),
                 NamedTupleStrSerializer):
+    def __new__(cls, attrName, value, type, schema_seq_no=None, claim_def_seq_no=None):
+        return super(Predicate, cls).__new__(cls, attrName, value, type, schema_seq_no, claim_def_seq_no)
+
     def __key(self):
         return self.attrName, self.value, self.type
 
@@ -262,7 +268,9 @@ class Predicate(namedtuple('Predicate', 'attrName, value, type'),
         return {
             'attrName': self.attrName,
             'value': self.value,
-            'type': self.type
+            'type': self.type,
+            'schema_seq_no': self.schema_seq_no,
+            'claim_def_seq_no': self.claim_def_seq_no
         }
 
     @classmethod
@@ -270,13 +278,16 @@ class Predicate(namedtuple('Predicate', 'attrName, value, type'),
         attrName = d['attrName']
         value = d['value']
         type = d['type']
-        return Predicate(attrName=attrName, value=value, type=type)
+        schema_seq_no = int(d['schema_seq_no']) if d['schema_seq_no'] else None
+        claim_def_seq_no = int(d['claim_def_seq_no']) if d['claim_def_seq_no'] else None
+        return Predicate(attrName=attrName, value=value, type=type,
+                         schema_seq_no=schema_seq_no, claim_def_seq_no=claim_def_seq_no)
 
 
 # TODO: now we consdider only  >= predicate. Support other types of predicates
 class PredicateGE(Predicate):
-    def __new__(cls, attrName, value, type='ge'):
-        return super(PredicateGE, cls).__new__(cls, attrName, value, type)
+    def __new__(cls, attrName, value, type='ge', schema_seq_no=None, claim_def_seq_no=None):
+        return super(PredicateGE, cls).__new__(cls, attrName, value, type, schema_seq_no, claim_def_seq_no)
 
 
 class Accumulator:
@@ -449,24 +460,24 @@ class ProofInput(
 
 
 class AttributeInfo(
-    namedtuple('ProofInput', 'schema_seq_no, name'),
+    namedtuple('ProofInput', 'name, schema_seq_no, claim_def_seq_no'),
     NamedTupleStrSerializer):
-    def __new__(cls, schema_seq_no=None, name=None):
-        return super(AttributeInfo, cls).__new__(cls, schema_seq_no, name)
+    def __new__(cls, name=None, schema_seq_no=None, claim_def_seq_no=None):
+        return super(AttributeInfo, cls).__new__(cls, name, schema_seq_no, claim_def_seq_no)
 
     def to_str_dict(self):
         return {
+            'name': self.name,
             'schema_seq_no': self.schema_seq_no,
-            'name': self.name
+            'claim_def_seq_no': self.claim_def_seq_no
         }
 
     @classmethod
     def from_str_dict(cls, d):
-        schema_seq_no = None
-        if d['schema_seq_no']:
-            schema_seq_no = int(d['schema_seq_no'])
+        schema_seq_no = int(d['schema_seq_no']) if d['schema_seq_no'] else None
+        claim_def_seq_no = int(d['claim_def_seq_no']) if d['claim_def_seq_no'] else None
         name = d['name']
-        return AttributeInfo(schema_seq_no=schema_seq_no, name=name)
+        return AttributeInfo(name, schema_seq_no, claim_def_seq_no)
 
 
 class ProofClaims(
@@ -723,10 +734,8 @@ class Proof(namedtuple('Proof', 'primaryProof, nonRevocProof'),
         return Proof(primaryProof=primaryProof)
 
 
-class ProofInfo(namedtuple('ProofInfo', 'proof, claim_def_seq_no, schema_seq_no'),
+class ProofInfo(namedtuple('ProofInfo', 'proof, schema_seq_no, issuer_did'),
                 NamedTupleStrSerializer):
-    def __new__(cls, proof: Proof, claim_def_seq_no=None, schema_seq_no=None):
-        return super(ProofInfo, cls).__new__(cls, proof, claim_def_seq_no, schema_seq_no)
 
     @classmethod
     def fromStrDict(cls, d):
@@ -738,17 +747,17 @@ class ProofInfo(namedtuple('ProofInfo', 'proof, claim_def_seq_no, schema_seq_no'
     def to_str_dict(self):
         return {
             'proof': self.proof.to_str_dict(),
-            'claim_def_seq_no': self.claim_def_seq_no,
-            'schema_seq_no': self.schema_seq_no
+            'schema_seq_no': self.schema_seq_no,
+            'issuer_did': self.issuer_did
         }
 
     @classmethod
     def from_str_dict(cls, d, n):
         proof = Proof.from_str_dict(d['proof'], n)
-        claim_def_seq_no = d['claim_def_seq_no']
         schema_seq_no = d['schema_seq_no']
+        issuer_did = d['issuer_did']
 
-        return ProofInfo(proof=proof, claim_def_seq_no=claim_def_seq_no, schema_seq_no=schema_seq_no)
+        return ProofInfo(proof=proof, schema_seq_no=schema_seq_no, issuer_did=issuer_did)
 
 
 class FullProof(namedtuple('FullProof', 'proofs, aggregatedProof, requestedProof'),

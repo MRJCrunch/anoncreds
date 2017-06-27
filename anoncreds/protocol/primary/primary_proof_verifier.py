@@ -1,8 +1,7 @@
 from anoncreds.protocol.globals import LARGE_E_START, ITERATIONS, DELTA
 from anoncreds.protocol.primary.primary_proof_common import calcTeq, calcTge
 from anoncreds.protocol.types import PrimaryEqualProof, \
-    PrimaryPredicateGEProof, PrimaryProof, ID, ProofInput
-from anoncreds.protocol.utils import encodeAttr
+    PrimaryPredicateGEProof, PrimaryProof, ID
 from anoncreds.protocol.wallet.wallet import Wallet
 from config.config import cmod
 

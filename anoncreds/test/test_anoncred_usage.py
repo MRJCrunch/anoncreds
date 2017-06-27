@@ -48,7 +48,7 @@ async def testSingleIssuerSingleProver(primes1):
 
     proofInput = ProofInput(
         verifier.generateNonce(),
-        {'attr_uuid': AttributeInfo(schema.seqId, 'name')},
+        {'attr_uuid': AttributeInfo('name', schema.seqId)},
         {'predicate_uuid': PredicateGE('age', 18)})
 
     proof = await prover.presentProof(proofInput)
@@ -101,8 +101,8 @@ async def testMultiplIssuersSingleProver(primes1, primes2):
 
     proofInput = ProofInput(
         verifier.generateNonce(),
-        {'attr_uuid1': AttributeInfo(schema1.seqId, 'name'),
-         'attr_uuid2': AttributeInfo(schema2.seqId, 'status')},
+        {'attr_uuid1': AttributeInfo('name', schema1.seqId),
+         'attr_uuid2': AttributeInfo('status', schema2.seqId)},
         {'predicate_uuid1': PredicateGE('age', 18),
          'predicate_uuid2': PredicateGE('period', 5)})
 
@@ -155,7 +155,7 @@ async def testSingleIssuerMultipleCredDefsSingleProver(primes1, primes2):
 
     proofInput = ProofInput(
         verifier.generateNonce(),
-        {'attr_uuid1': AttributeInfo(schema1.seqId, 'name')},
+        {'attr_uuid1': AttributeInfo('name', schema1.seqId)},
         {'predicate_uuid1': PredicateGE('age', 18),
          'predicate_uuid2': PredicateGE('period', 5)})
 
@@ -198,7 +198,7 @@ async def testSingleIssuerSingleProverPrimaryOnly(primes1):
 
     proofInput = ProofInput(
         verifier.generateNonce(),
-        {'attr_uuid1': AttributeInfo(schema.seqId, 'name')},
+        {'attr_uuid1': AttributeInfo('name', schema.seqId)},
         {'predicate_uuid1': PredicateGE('age', 18)})
 
     proof = await prover.presentProof(proofInput)
