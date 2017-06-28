@@ -6,7 +6,7 @@ from anoncreds.protocol.primary.primary_proof_verifier import \
 from anoncreds.protocol.revocation.accumulators.non_revocation_proof_verifier import \
     NonRevocationProofVerifier
 from anoncreds.protocol.types import FullProof, ProofInput
-from anoncreds.protocol.utils import get_hash_as_int
+from anoncreds.protocol.utils import get_hash_as_int, isCryptoInteger
 from anoncreds.protocol.wallet.wallet import Wallet
 from config.config import cmod
 
@@ -53,7 +53,9 @@ class Verifier:
                                                               proof.aggregatedProof.cHash,
                                                               proofItem.proof.primaryProof)
 
-        CHver = self._get_hash(proof.aggregatedProof.CList, TauList, proofInput.nonce)
+        CHver = self._get_hash(proof.aggregatedProof.CList,
+                               [int(cmod.toInt(el)) for el in TauList if isCryptoInteger(el)],
+                               proofInput.nonce)
 
         return CHver == proof.aggregatedProof.cHash
 

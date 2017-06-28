@@ -11,7 +11,7 @@ from anoncreds.protocol.types import PrimaryClaim, NonRevocationClaim, Proof, \
     InitProof, ProofInput, ProofClaims, \
     FullProof, \
     Schema, ID, SchemaKey, ClaimRequest, Claims, RequestedProof, AggregatedProof, ProofInfo, AttributeValues
-from anoncreds.protocol.utils import get_hash_as_int
+from anoncreds.protocol.utils import get_hash_as_int, isCryptoInteger
 from anoncreds.protocol.wallet.prover_wallet import ProverWallet
 from config.config import cmod
 
@@ -249,7 +249,8 @@ class Prover:
             initProofs[schemaId] = initProof
 
         # 2. hash
-        cH = self._get_hash(CList, TauList, nonce)
+        cH = self._get_hash([int(cmod.toInt(el)) for el in CList if isCryptoInteger(el)],
+                            [int(cmod.toInt(el)) for el in TauList if isCryptoInteger(el)], nonce)
 
         # 3. finalize proofs
         proofs = {}
@@ -268,7 +269,7 @@ class Prover:
 
             proofs[str(schemaId)] = proofInfo
 
-        aggregatedProof = AggregatedProof(cH, CList)
+        aggregatedProof = AggregatedProof(cH, [int(cmod.toInt(el)) for el in CList if isCryptoInteger(el)])
 
         return FullProof(proofs, aggregatedProof, proofRequest)
 
