@@ -249,8 +249,8 @@ class Prover:
             initProofs[schemaId] = initProof
 
         # 2. hash
-        cH = self._get_hash([int(cmod.toInt(el)) for el in CList if isCryptoInteger(el)],
-                            [int(cmod.toInt(el)) for el in TauList if isCryptoInteger(el)], nonce)
+        cH = self._get_hash([cmod.toInt(el) if isCryptoInteger(el) else el for el in CList],
+                            [cmod.toInt(el) if isCryptoInteger(el) else el for el in TauList], nonce)
 
         # 3. finalize proofs
         proofs = {}
@@ -269,7 +269,7 @@ class Prover:
 
             proofs[str(schemaId)] = proofInfo
 
-        aggregatedProof = AggregatedProof(cH, [int(cmod.toInt(el)) for el in CList if isCryptoInteger(el)])
+        aggregatedProof = AggregatedProof(cH, [cmod.toInt(el) if isCryptoInteger(el) else el for el in CList])
 
         return FullProof(proofs, aggregatedProof, proofRequest)
 

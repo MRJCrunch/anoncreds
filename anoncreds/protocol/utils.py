@@ -353,14 +353,16 @@ def currentTimestampMillisec():
 
 
 def intToArrayBytes(value):
-    value = int(cmod.toInt(value))
+    value = int(value)
     result = []
     for i in range(0, sys.getsizeof(value)):
         b = value >> (i * 8) & 0xff
-        if b != 0:
-            result.append(b)
+        result.append(b)
 
     result.reverse()
+
+    first_non_zero = next((i for i, x in enumerate(result) if x), None)
+    result = result[first_non_zero::]
 
     return result
 

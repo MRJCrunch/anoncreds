@@ -54,7 +54,7 @@ class Verifier:
                                                               proofItem.proof.primaryProof)
 
         CHver = self._get_hash(proof.aggregatedProof.CList,
-                               [int(cmod.toInt(el)) for el in TauList if isCryptoInteger(el)],
+                               [cmod.toInt(el) if isCryptoInteger(el) else el for el in TauList],
                                proofInput.nonce)
 
         return CHver == proof.aggregatedProof.cHash
