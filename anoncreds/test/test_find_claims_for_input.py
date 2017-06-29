@@ -183,3 +183,53 @@ async def testPredicateNotFound(prover1, allClaims):
                                         'predicate_uuid2': PredicateGE('aaaa', 8)})
     with pytest.raises(ValueError):
         await prover1._findClaims(proofInput)
+
+
+@pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
+@pytest.mark.asyncio
+async def testOneRevealedFromSchema(prover1, allClaims, schemaGvtId, attrRepo, schemaGvt):
+    proofInput = ProofInput(revealedAttrs={'uuid': AttributeInfo(name='name', schema_seq_no=schemaGvt.seqId)})
+    claimsGvt = await prover1.wallet.getClaimSignature(schemaGvtId)
+
+    proofClaims = {schemaGvt.seqId: ProofClaims(claimsGvt, ['name'], [])}
+    attr = attrRepo.getAttributes(schemaGvtId.schemaKey, prover1.proverId)['name']
+    requestedProof = RequestedProof(revealed_attrs={'uuid': [str(schemaGvt.seqId), attr, str(encodeAttr(attr))]})
+
+    assert proofClaims, requestedProof == await prover1._findClaims(proofInput)
+
+
+@pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
+@pytest.mark.asyncio
+async def testOneRevealedFromOtherSchema(prover1, allClaims, schemaXyz):
+    proofInput = ProofInput(revealedAttrs={'uuid': AttributeInfo(name='name', schema_seq_no=schemaXyz.seqId)})
+
+    with pytest.raises(ValueError):
+        await prover1._findClaims(proofInput)
+
+
+@pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
+@pytest.mark.asyncio
+async def testOneRevealedFromSpecificClaim(prover1, allClaims, schemaGvt, schemaGvtId, attrRepo, keysGvt):
+    (publicKey, _), _ = keysGvt
+    proofInput = ProofInput(revealedAttrs={'uuid': AttributeInfo(name='name', schema_seq_no=schemaGvt.seqId,
+                                                                 claim_def_seq_no=publicKey.seqId)})
+    claimsGvt = await prover1.wallet.getClaimSignature(schemaGvtId)
+
+    proofClaims = {schemaGvt.seqId: ProofClaims(claimsGvt, ['name'], [])}
+    attr = attrRepo.getAttributes(schemaGvtId.schemaKey, prover1.proverId)['name']
+    requestedProof = RequestedProof(revealed_attrs={'uuid': [str(schemaGvt.seqId), attr, str(encodeAttr(attr))]})
+
+    assert proofClaims, requestedProof == await prover1._findClaims(proofInput)
+
+    assert proofClaims, requestedProof == await prover1._findClaims(proofInput)
+
+
+@pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
+@pytest.mark.asyncio
+async def testOneRevealedFromOtherClaim(prover1, allClaims, schemaGvt, keysXyz):
+    (publicKey, _), _ = keysXyz
+    proofInput = ProofInput(revealedAttrs={'uuid': AttributeInfo(name='name', schema_seq_no=schemaGvt.seqId,
+                                                                 claim_def_seq_no=publicKey.seqId)})
+
+    with pytest.raises(ValueError):
+        await prover1._findClaims(proofInput)

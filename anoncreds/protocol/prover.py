@@ -158,6 +158,8 @@ class Prover:
         foundRevealedAttrs = {}
         foundPredicates = {}
         proofClaims = {}
+        scheamsIds = {}
+        pks = {}
         allClaims = await self.wallet.getAllClaims()
 
         async def addProof():
@@ -170,46 +172,38 @@ class Prover:
 
             proofClaims[schemaId] = proofClaim
 
+        for schemaKey, c in allClaims.items():
+            scheamsIds[schemaKey] = (await self.wallet.getSchema(ID(schemaKey))).seqId
+            pks[schemaKey] = (await self.wallet.getPublicKey(ID(schemaKey))).seqId
+
         for uuid, revealedAttr in revealedAttrs.items():
-            claim = None
-            for schemaKey, c in allClaims.items():
-                schemaId = (await self.wallet.getSchema(ID(schemaKey))).seqId
-                pk = (await self.wallet.getPublicKey(ID(schemaKey))).seqId
+            matches = [(scheamsIds[key], c) for key, c in allClaims.items() if revealedAttr.name in c
+                       and (scheamsIds[key] == revealedAttr.schema_seq_no if revealedAttr.schema_seq_no else True)
+                       and (pks[key] == revealedAttr.claim_def_seq_no if revealedAttr.claim_def_seq_no else True)]
 
-                if revealedAttr.name in c and (
-                            schemaId == revealedAttr.schema_seq_no if revealedAttr.schema_seq_no else True) and \
-                        (pk == revealedAttr.claim_def_seq_no if revealedAttr.claim_def_seq_no else True):
-                    claim = c
-                    foundRevealedAttrs[uuid] = [str(schemaId), str(claim[revealedAttr.name].raw),
-                                                str(claim[revealedAttr.name].encoded)]
-
-                    if schemaId not in proofClaims:
-                        await addProof()
-                    break
-
-            if not claim:
+            if len(matches) == 0:
                 raise ValueError("A claim isn't found for the following attributes: {}", revealedAttr.name)
 
+            schemaId, claim = matches[0]
+            foundRevealedAttrs[uuid] = [str(schemaId), str(claim[revealedAttr.name].raw),
+                                        str(claim[revealedAttr.name].encoded)]
+
+            if schemaId not in proofClaims:
+                await addProof()
+
         for uuid, predicate in predicates.items():
-            claim = None
-            for schemaKey, c in allClaims.items():
-                schemaId = (await self.wallet.getSchema(ID(schemaKey))).seqId
-                pk = (await self.wallet.getPublicKey(ID(schemaKey))).seqId
+            matches = [(scheamsIds[key], c) for key, c in allClaims.items() if predicate.attrName in c
+                       and (scheamsIds[key] == predicate.schema_seq_no if predicate.schema_seq_no else True)
+                       and (pks[key] == predicate.claim_def_seq_no if predicate.claim_def_seq_no else True)]
 
-                if predicate.attrName in c and (
-                            schemaId == revealedAttr.schema_seq_no if predicate.schema_seq_no else True) and \
-                        (pk == revealedAttr.claim_def_seq_no if predicate.claim_def_seq_no else True):
-
-                    claim = c
-                    schemaId = (await self.wallet.getSchema(ID(schemaKey))).seqId
-                    foundPredicates[uuid] = str(schemaId)
-
-                    if schemaId not in proofClaims:
-                        await addProof()
-                    break
-
-            if not claim:
+            if len(matches) == 0:
                 raise ValueError("A claim isn't found for the following predicate: {}", predicate)
+
+            schemaId, claim = matches[0]
+            foundPredicates[uuid] = str(schemaId)
+
+            if schemaId not in proofClaims:
+                await addProof()
 
         requestedProof = RequestedProof(revealed_attrs=foundRevealedAttrs, predicates=foundPredicates)
 
@@ -249,8 +243,7 @@ class Prover:
             initProofs[schemaId] = initProof
 
         # 2. hash
-        cH = self._get_hash([cmod.toInt(el) if isCryptoInteger(el) else el for el in CList],
-                            [cmod.toInt(el) if isCryptoInteger(el) else el for el in TauList], nonce)
+        cH = self._get_hash(self._prepare_collection(CList), self._prepare_collection(TauList), nonce)
 
         # 3. finalize proofs
         proofs = {}
@@ -269,7 +262,7 @@ class Prover:
 
             proofs[str(schemaId)] = proofInfo
 
-        aggregatedProof = AggregatedProof(cH, [cmod.toInt(el) if isCryptoInteger(el) else el for el in CList])
+        aggregatedProof = AggregatedProof(cH, self._prepare_collection(CList))
 
         return FullProof(proofs, aggregatedProof, proofRequest)
 
@@ -286,6 +279,9 @@ class Prover:
             TauList += await initProof.nonRevocInitProof.asTauList()
             TauList += await initProof.primaryInitProof.asTauList()
         return TauList
+
+    def _prepare_collection(self, values):
+        return [cmod.toInt(el) if isCryptoInteger(el) else el for el in values]
 
     def _get_hash(self, CList, TauList, nonce):
         return get_hash_as_int(nonce,

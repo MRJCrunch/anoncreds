@@ -36,11 +36,11 @@ class Verifier:
 
         if proofInput.revealedAttrs.keys() != proof.requestedProof.revealed_attrs.keys():
             raise ValueError('Received attributes ={} do not correspond to requested={}'.format(
-                proofInput.revealedAttrs.keys(), proof.requestedProof.revealed_attrs.keys()))
+                proof.requestedProof.revealed_attrs.keys(), proofInput.revealedAttrs.keys()))
 
         if proofInput.predicates.keys() != proof.requestedProof.predicates.keys():
             raise ValueError('Received predicates ={} do not correspond to requested={}'.format(
-                proofInput.predicates.keys(), proof.requestedProof.predicates.keys()))
+                proof.requestedProof.predicates.keys(), proofInput.predicates.keys()))
 
         TauList = []
         for (uuid, proofItem) in proof.proofs.items():
@@ -53,11 +53,12 @@ class Verifier:
                                                               proof.aggregatedProof.cHash,
                                                               proofItem.proof.primaryProof)
 
-        CHver = self._get_hash(proof.aggregatedProof.CList,
-                               [cmod.toInt(el) if isCryptoInteger(el) else el for el in TauList],
-                               proofInput.nonce)
+        CHver = self._get_hash(proof.aggregatedProof.CList, self._prepare_collection(TauList), proofInput.nonce)
 
         return CHver == proof.aggregatedProof.cHash
+
+    def _prepare_collection(self, values):
+        return [cmod.toInt(el) if isCryptoInteger(el) else el for el in values]
 
     def _get_hash(self, CList, TauList, nonce):
         return get_hash_as_int(nonce,
