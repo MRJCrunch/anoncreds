@@ -7,6 +7,7 @@ from anoncreds.protocol.utils import toDictWithStrValues, \
     intToArrayBytes, bytesToInt
 from config.config import cmod
 
+
 class AttribType:
     def __init__(self, name: str, encode: bool):
         self.name = name
@@ -266,18 +267,18 @@ class Predicate(namedtuple('Predicate', 'attrName, value, type, schema_seq_no, c
 
     def to_str_dict(self):
         return {
-            'attrName': self.attrName,
+            'attr_name': self.attrName,
             'value': self.value,
-            'type': self.type,
+            'p_type': self.type,
             'schema_seq_no': self.schema_seq_no,
             'claim_def_seq_no': self.claim_def_seq_no
         }
 
     @classmethod
     def from_str_dict(cls, d):
-        attrName = d['attrName']
+        attrName = d['attr_name']
         value = d['value']
-        type = d['type']
+        type = d['p_type']
         schema_seq_no = int(d['schema_seq_no']) if d['schema_seq_no'] else None
         claim_def_seq_no = int(d['claim_def_seq_no']) if d['claim_def_seq_no'] else None
         return Predicate(attrName=attrName, value=value, type=type,
@@ -305,6 +306,7 @@ class Accumulator:
         return self.iA == other.iA and self.acc == other.acc \
                and self.V == other.V and self.L == other.L \
                and self.currentI == other.currentI
+
 
 ClaimInitDataType = namedtuple('ClaimInitDataType', 'U, vPrime')
 
@@ -395,20 +397,18 @@ class Claims(namedtuple('Claims', 'primaryClaim, nonRevocClaim'),
 
     def to_str_dict(self):
         return {
-            'primaryClaim': self.primaryClaim.to_str_dict(),
-            'nonRevocClaim': self.nonRevocClaim.to_str_dict() if self.nonRevocClaim else None
+            'primary_claim': self.primaryClaim.to_str_dict(),
+            'non_revocation_claim': self.nonRevocClaim.to_str_dict() if self.nonRevocClaim else None
         }
 
     @classmethod
     def from_str_dict(cls, data, n):
-        primary = PrimaryClaim.from_str_dict(data['primaryClaim'], n)
+        primary = PrimaryClaim.from_str_dict(data['primary_claim'], n)
         nonRevoc = None
-        if 'nonRevocClaim' in data and data['nonRevocClaim']:
-            nonRevoc = NonRevocationClaim.fromStrDict(data['nonRevocClaim'])
+        if 'non_revocation_claim' in data and data['non_revocation_claim']:
+            nonRevoc = NonRevocationClaim.fromStrDict(data['non_revocation_claim'])
 
         return cls(primaryClaim=primary, nonRevocClaim=nonRevoc)
-
-
 
     def __str__(self):
         return str(self.primaryClaim)
@@ -623,8 +623,8 @@ class PrimaryEqualProof(namedtuple('PrimaryEqualProof',
             'm1': str(crypto_int_to_str(self.m1)),
             'm2': str(crypto_int_to_str(self.m2)),
             'm': {k: str(crypto_int_to_str(v)) for k, v in self.m.items()},
-            'revealedAttrs': {k: str(v) for k, v in self.revealedAttrs.items()},
-            'Aprime': str(crypto_int_to_str(self.Aprime))
+            'revealed_attrs': {k: str(v) for k, v in self.revealedAttrs.items()},
+            'a_prime': str(crypto_int_to_str(self.Aprime))
         }
 
     @classmethod
@@ -633,8 +633,8 @@ class PrimaryEqualProof(namedtuple('PrimaryEqualProof',
         v = to_crypto_int(d['v'])
         m1 = to_crypto_int(d['m1'])
         m2 = to_crypto_int(d['m2'])
-        Aprime = to_crypto_int(d['Aprime'], str(n))
-        revealedAttrs = {k: to_crypto_int(v) for k, v in d['revealedAttrs'].items()}
+        Aprime = to_crypto_int(d['a_prime'], str(n))
+        revealedAttrs = {k: to_crypto_int(v) for k, v in d['revealed_attrs'].items()}
         m = {k: to_crypto_int(v) for k, v in d['m'].items()}
 
         return PrimaryEqualProof(e=e, v=v, m1=m1, m2=m2, m=m, Aprime=Aprime, revealedAttrs=revealedAttrs)
@@ -656,7 +656,7 @@ class PrimaryPredicateGEProof(
             'mj': str(crypto_int_to_str(self.mj)),
             'u': {k: str(crypto_int_to_str(v)) for k, v in self.u.items()},
             'r': {k: str(crypto_int_to_str(v)) for k, v in self.r.items()},
-            'T': {k: str(crypto_int_to_str(v)) for k, v in self.T.items()},
+            't': {k: str(crypto_int_to_str(v)) for k, v in self.T.items()},
             'predicate': self.predicate.to_str_dict()
         }
 
@@ -666,7 +666,7 @@ class PrimaryPredicateGEProof(
         mj = to_crypto_int(d['mj'])
         u = {k: to_crypto_int(v) for k, v in d['u'].items()}
         r = {k: to_crypto_int(v) for k, v in d['r'].items()}
-        T = {k: to_crypto_int(v, str(n)) for k, v in d['T'].items()}
+        T = {k: to_crypto_int(v, str(n)) for k, v in d['t'].items()}
         predicate = PredicateGE.from_str_dict(d['predicate'])
 
         return PrimaryPredicateGEProof(alpha=alpha, mj=mj, u=u, r=r, T=T, predicate=predicate)
@@ -690,20 +690,19 @@ class PrimaryProof(namedtuple('PrimaryProof', 'eqProof, geProofs'),
     @classmethod
     def fromStrDict(cls, d):
         eqProof = PrimaryEqualProof.fromStrDict(d['eqProof'])
-        geProofs = [PrimaryPredicateGEProof.fromStrDict(v) for v in
-                    d['geProofs']]
+        geProofs = [PrimaryPredicateGEProof.fromStrDict(v) for v in d['geProofs']]
         return PrimaryProof(eqProof=eqProof, geProofs=geProofs)
 
     def to_str_dict(self):
         return {
-            'eqProof': self.eqProof.to_str_dict(),
-            'geProofs': [p.to_str_dict() for p in self.geProofs]
+            'eq_proof': self.eqProof.to_str_dict(),
+            'ge_proofs': [p.to_str_dict() for p in self.geProofs]
         }
 
     @classmethod
     def from_str_dict(cls, d, n):
-        eqProof = PrimaryEqualProof.from_str_dict(d['eqProof'], n)
-        geProofs = [PrimaryPredicateGEProof.from_str_dict(p, n) for p in d['geProofs']]
+        eqProof = PrimaryEqualProof.from_str_dict(d['eq_proof'], n)
+        geProofs = [PrimaryPredicateGEProof.from_str_dict(p, n) for p in d['ge_proofs']]
 
         return PrimaryProof(eqProof=eqProof, geProofs=geProofs)
 
@@ -724,19 +723,18 @@ class Proof(namedtuple('Proof', 'primaryProof, nonRevocProof'),
 
     def to_str_dict(self):
         return {
-            'primaryProof': self.primaryProof.to_str_dict()
+            'primary_proof': self.primaryProof.to_str_dict()
         }
 
     @classmethod
     def from_str_dict(cls, d, n):
-        primaryProof = PrimaryProof.from_str_dict(d['primaryProof'], n)
+        primaryProof = PrimaryProof.from_str_dict(d['primary_proof'], n)
 
         return Proof(primaryProof=primaryProof)
 
 
 class ProofInfo(namedtuple('ProofInfo', 'proof, schema_seq_no, issuer_did'),
                 NamedTupleStrSerializer):
-
     @classmethod
     def fromStrDict(cls, d):
         d = fromDictWithStrValues(d)
@@ -776,15 +774,15 @@ class FullProof(namedtuple('FullProof', 'proofs, aggregatedProof, requestedProof
 
     def to_str_dict(self):
         return {
-            'aggregatedProof': self.aggregatedProof.to_str_dict(),
+            'aggregated_proof': self.aggregatedProof.to_str_dict(),
             'proofs': {k: v.to_str_dict() for k, v in self.proofs.items()},
-            'requestedProof': self.requestedProof.to_str_dict()
+            'requested_proof': self.requestedProof.to_str_dict()
         }
 
     @classmethod
     def from_str_dict(cls, d, n):
-        aggregatedProof = AggregatedProof.from_str_dict(d['aggregatedProof'])
-        requestedProof = RequestedProof.from_str_dict(d['requestedProof'])
+        aggregatedProof = AggregatedProof.from_str_dict(d['aggregated_proof'])
+        requestedProof = RequestedProof.from_str_dict(d['requested_proof'])
         proofs = {k: Proof.from_str_dict(v['proof'], n) for k, v in d['proofs']}
 
         return FullProof(aggregatedProof=aggregatedProof, requestedProof=requestedProof, proofs=proofs)
@@ -794,14 +792,14 @@ class AggregatedProof(namedtuple('AggregatedProof', 'cHash, CList'),
                       NamedTupleStrSerializer):
     def to_str_dict(self):
         return {
-            'cHash': str(self.cHash),
-            'CList': [intToArrayBytes(v) for v in self.CList if isCryptoInteger(v)]
+            'c_hash': str(self.cHash),
+            'c_list': [intToArrayBytes(v) for v in self.CList if isCryptoInteger(v)]
         }
 
     @classmethod
     def from_str_dict(cls, d):
-        cHash = int(d['cHash'])
-        CList = [bytesToInt(v) for v in d['CList']]
+        cHash = int(d['c_hash'])
+        CList = [bytesToInt(v) for v in d['c_list']]
         return AggregatedProof(cHash=cHash, CList=CList)
 
 

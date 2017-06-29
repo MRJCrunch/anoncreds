@@ -53,7 +53,8 @@ class Verifier:
                                                               proof.aggregatedProof.cHash,
                                                               proofItem.proof.primaryProof)
 
-        CHver = self._get_hash(proof.aggregatedProof.CList, self._prepare_collection(TauList), proofInput.nonce)
+        CHver = self._get_hash(proof.aggregatedProof.CList, self._prepare_collection(TauList),
+                               cmod.integer(proofInput.nonce))
 
         return CHver == proof.aggregatedProof.cHash
 

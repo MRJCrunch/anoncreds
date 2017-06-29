@@ -23,11 +23,12 @@ async def testPrimaryClaimOnlyEmpty(prover1, verifier, claimsProver1Gvt, nonce):
 @pytest.mark.asyncio
 async def testPrimaryClaimNoPredicates(prover1, verifier, claimsProver1Gvt,
                                        nonce, schemaGvtId):
-    proofInput = ProofInput(nonce, {'uuid': AttributeInfo(name='name')})
+    proofInput = ProofInput(nonce=nonce, revealedAttrs={'uuid1': AttributeInfo(name='name')}, predicates={})
+
     claims, requestedProof = await prover1._findClaims(proofInput)
     claims = {
         schemaId: ProofClaims(
-            Claims(primaryClaim=proofClaim.claims.primaryClaim), ['name'], [])
+            Claims(primaryClaim=proofClaim.claims.primaryClaim), [AttributeInfo(name='name')], [])
         for schemaId, proofClaim in claims.items()}
     proof = await prover1._prepareProof(claims, proofInput.nonce, requestedProof)
 

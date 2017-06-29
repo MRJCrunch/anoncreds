@@ -162,7 +162,7 @@ def test_proof_input_from_to_dict():
     proof_input_serialized = {
         'nonce': '1',
         'revealedAttrs': {'attr_uuid': {'name': 'name', 'schema_seq_no': None, 'claim_def_seq_no': None}},
-        'predicates': {'predicate_uuid': {'type': 'ge', 'value': 18, 'attrName': 'age', 'schema_seq_no': None,
+        'predicates': {'predicate_uuid': {'p_type': 'ge', 'value': 18, 'attr_name': 'age', 'schema_seq_no': None,
                                           'claim_def_seq_no': None}}
     }
     assert proof_input.to_str_dict() == proof_input_serialized
@@ -209,8 +209,8 @@ async def test_aggregated_proof_from_to_dict(prover1, nonce, claimsProver1Gvt):
     aggregated_proof = AggregatedProof(1, [cmod.integer(111), cmod.integer(32321), cmod.integer(323)])
 
     aggregated_proof_serialized = {
-        'cHash': '1',
-        'CList': [[111], [126, 65], [1, 67]]
+        'c_hash': '1',
+        'c_list': [[111], [126, 65], [1, 67]]
     }
 
     assert aggregated_proof.to_str_dict() == aggregated_proof_serialized
@@ -228,13 +228,13 @@ async def test_equal_proof_from_to_dict():
                                 revealedAttrs={'name': cmod.integer(35)})
 
     proof_serialized = {
-        'Aprime': '32',
+        'a_prime': '32',
         'e': '1',
         'm': {'name': '12'},
         'm1': '12',
         'm2': '32',
         'v': '11',
-        'revealedAttrs': {'name': '35'}
+        'revealed_attrs': {'name': '35'}
     }
 
     assert eqProof.to_str_dict() == proof_serialized
@@ -254,12 +254,12 @@ async def test_ge_proof_from_to_dict():
     proof_serialized = {
         'alpha': '1',
         'mj': '12',
-        'T': {'1': '21'},
+        't': {'1': '21'},
         'r': {'1': '13'},
         'u': {'1': '42'},
         'predicate': {
-            'type': 'ge',
-            'attrName': 'age',
+            'p_type': 'ge',
+            'attr_name': 'age',
             'value': 18,
             'schema_seq_no': None,
             'claim_def_seq_no': None
@@ -286,25 +286,25 @@ async def test_primary_proof_from_to_dict():
     primaryProof = PrimaryProof(eqProof=eqProof, geProofs=[geProof])
 
     proof_serialized = {
-        'eqProof': {
-            'Aprime': '32',
+        'eq_proof': {
+            'a_prime': '32',
             'e': '1',
             'm': {'name': '12'},
             'm1': '12',
             'm2': '32',
             'v': '11',
-            'revealedAttrs': {'name': '35'}
+            'revealed_attrs': {'name': '35'}
         },
-        'geProofs': [
+        'ge_proofs': [
             {
                 'alpha': '1',
                 'mj': '12',
-                'T': {'1': '21'},
+                't': {'1': '21'},
                 'r': {'1': '13'},
                 'u': {'1': '42'},
                 'predicate': {
-                    'type': 'ge',
-                    'attrName': 'age',
+                    'p_type': 'ge',
+                    'attr_name': 'age',
                     'value': 18,
                     'schema_seq_no': None,
                     'claim_def_seq_no': None
@@ -338,26 +338,26 @@ async def test_proof_info_from_to_dict():
         'issuer_did': 'did',
         'schema_seq_no': 1,
         'proof': {
-            'primaryProof': {
-                'eqProof': {
-                    'Aprime': '32',
+            'primary_proof': {
+                'eq_proof': {
+                    'a_prime': '32',
                     'e': '1',
                     'm': {'name': '12'},
                     'm1': '12',
                     'm2': '32',
                     'v': '11',
-                    'revealedAttrs': {'name': '35'}
+                    'revealed_attrs': {'name': '35'}
                 },
-                'geProofs': [
+                'ge_proofs': [
                     {
                         'alpha': '1',
                         'mj': '12',
-                        'T': {'1': '21'},
+                        't': {'1': '21'},
                         'r': {'1': '13'},
                         'u': {'1': '42'},
                         'predicate': {
-                            'type': 'ge',
-                            'attrName': 'age',
+                            'p_type': 'ge',
+                            'attr_name': 'age',
                             'value': 18,
                             'schema_seq_no': None,
                             'claim_def_seq_no': None

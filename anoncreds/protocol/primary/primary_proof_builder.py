@@ -76,7 +76,7 @@ class PrimaryProofBuilder:
             -> PrimaryEqualInitProof:
         m2Tilde = m2Tilde if m2Tilde else cmod.integer(
             cmod.randomBits(LARGE_MVECT))
-        revealedAttrs, unrevealedAttrs = splitRevealedAttrs(claim, revealedAttrs)
+        revealedAttrs, unrevealedAttrs = splitRevealedAttrs(claim, [a.name for a in revealedAttrs])
         mtilde = self._getMTilde(unrevealedAttrs)
 
         Ra = cmod.integer(cmod.randomBits(LARGE_VPRIME))
