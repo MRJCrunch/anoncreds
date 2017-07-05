@@ -209,10 +209,9 @@ async def testOneRevealedFromOtherSchema(prover1, allClaims, schemaXyz):
 
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
 @pytest.mark.asyncio
-async def testOneRevealedFromSpecificClaim(prover1, allClaims, schemaGvt, schemaGvtId, attrRepo, keysGvt):
-    (publicKey, _), _ = keysGvt
+async def testOneRevealedFromSpecificSchemaAndIssuer(prover1, allClaims, schemaGvt, schemaGvtId, attrRepo, keysGvt):
     proofInput = ProofInput(revealedAttrs={'uuid': AttributeInfo(name='name', schema_seq_no=schemaGvt.seqId,
-                                                                 claim_def_seq_no=publicKey.seqId)})
+                                                                 issuer_did=schemaGvt.issuerId)})
     claimsGvt = await prover1.wallet.getClaimSignature(schemaGvtId)
 
     proofClaims = {schemaGvt.seqId: ProofClaims(claimsGvt, ['name'], [])}
@@ -226,10 +225,9 @@ async def testOneRevealedFromSpecificClaim(prover1, allClaims, schemaGvt, schema
 
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
 @pytest.mark.asyncio
-async def testOneRevealedFromOtherClaim(prover1, allClaims, schemaGvt, keysXyz):
-    (publicKey, _), _ = keysXyz
+async def testOneRevealedFromOtherIssuer(prover1, allClaims, schemaGvt, schemaXyz):
     proofInput = ProofInput(revealedAttrs={'uuid': AttributeInfo(name='name', schema_seq_no=schemaGvt.seqId,
-                                                                 claim_def_seq_no=publicKey.seqId)})
+                                                                 issuer_did=schemaXyz.issuerId)})
 
     with pytest.raises(ValueError):
         await prover1._findClaims(proofInput)

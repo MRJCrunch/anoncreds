@@ -251,10 +251,10 @@ class AccumulatorSecretKey(
     pass
 
 
-class Predicate(namedtuple('Predicate', 'attrName, value, type, schema_seq_no, claim_def_seq_no'),
+class Predicate(namedtuple('Predicate', 'attrName, value, type, schema_seq_no, issuer_did'),
                 NamedTupleStrSerializer):
-    def __new__(cls, attrName, value, type, schema_seq_no=None, claim_def_seq_no=None):
-        return super(Predicate, cls).__new__(cls, attrName, value, type, schema_seq_no, claim_def_seq_no)
+    def __new__(cls, attrName, value, type, schema_seq_no=None, issuer_did=None):
+        return super(Predicate, cls).__new__(cls, attrName, value, type, schema_seq_no, issuer_did)
 
     def __key(self):
         return self.attrName, self.value, self.type
@@ -271,7 +271,7 @@ class Predicate(namedtuple('Predicate', 'attrName, value, type, schema_seq_no, c
             'value': self.value,
             'p_type': self.type,
             'schema_seq_no': self.schema_seq_no,
-            'claim_def_seq_no': self.claim_def_seq_no
+            'issuer_did': self.issuer_did
         }
 
     @classmethod
@@ -280,15 +280,15 @@ class Predicate(namedtuple('Predicate', 'attrName, value, type, schema_seq_no, c
         value = d['value']
         type = d['p_type']
         schema_seq_no = int(d['schema_seq_no']) if d['schema_seq_no'] else None
-        claim_def_seq_no = int(d['claim_def_seq_no']) if d['claim_def_seq_no'] else None
+        issuer_did = int(d['issuer_did']) if d['issuer_did'] else None
         return Predicate(attrName=attrName, value=value, type=type,
-                         schema_seq_no=schema_seq_no, claim_def_seq_no=claim_def_seq_no)
+                         schema_seq_no=schema_seq_no, issuer_did=issuer_did)
 
 
 # TODO: now we consdider only  >= predicate. Support other types of predicates
 class PredicateGE(Predicate):
-    def __new__(cls, attrName, value, type='ge', schema_seq_no=None, claim_def_seq_no=None):
-        return super(PredicateGE, cls).__new__(cls, attrName, value, type, schema_seq_no, claim_def_seq_no)
+    def __new__(cls, attrName, value, type='ge', schema_seq_no=None, issuer_did=None):
+        return super(PredicateGE, cls).__new__(cls, attrName, value, type, schema_seq_no, issuer_did)
 
 
 class Accumulator:
@@ -460,24 +460,24 @@ class ProofInput(
 
 
 class AttributeInfo(
-    namedtuple('ProofInput', 'name, schema_seq_no, claim_def_seq_no'),
+    namedtuple('ProofInput', 'name, schema_seq_no, issuer_did'),
     NamedTupleStrSerializer):
-    def __new__(cls, name=None, schema_seq_no=None, claim_def_seq_no=None):
-        return super(AttributeInfo, cls).__new__(cls, name, schema_seq_no, claim_def_seq_no)
+    def __new__(cls, name=None, schema_seq_no=None, issuer_did=None):
+        return super(AttributeInfo, cls).__new__(cls, name, schema_seq_no, issuer_did)
 
     def to_str_dict(self):
         return {
             'name': self.name,
             'schema_seq_no': self.schema_seq_no,
-            'claim_def_seq_no': self.claim_def_seq_no
+            'issuer_did': self.issuer_did
         }
 
     @classmethod
     def from_str_dict(cls, d):
         schema_seq_no = int(d['schema_seq_no']) if d['schema_seq_no'] else None
-        claim_def_seq_no = int(d['claim_def_seq_no']) if d['claim_def_seq_no'] else None
+        issuer_did = int(d['issuer_did']) if d['issuer_did'] else None
         name = d['name']
-        return AttributeInfo(name, schema_seq_no, claim_def_seq_no)
+        return AttributeInfo(name, schema_seq_no, issuer_did)
 
 
 class ProofClaims(

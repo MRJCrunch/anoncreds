@@ -1,6 +1,6 @@
-from typing import Dict, Sequence
+from typing import Dict
 
-from anoncreds.protocol.globals import LARGE_MASTER_SECRET, TYPE_CL
+from anoncreds.protocol.globals import LARGE_MASTER_SECRET
 from anoncreds.protocol.primary.primary_claim_issuer import PrimaryClaimIssuer
 from anoncreds.protocol.repo.attributes_repo import AttributeRepo
 from anoncreds.protocol.revocation.accumulators.non_revocation_claim_issuer import \

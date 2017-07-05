@@ -161,9 +161,9 @@ def test_proof_input_from_to_dict():
 
     proof_input_serialized = {
         'nonce': '1',
-        'revealedAttrs': {'attr_uuid': {'name': 'name', 'schema_seq_no': None, 'claim_def_seq_no': None}},
+        'revealedAttrs': {'attr_uuid': {'name': 'name', 'schema_seq_no': None, 'issuer_did': None}},
         'predicates': {'predicate_uuid': {'p_type': 'ge', 'value': 18, 'attr_name': 'age', 'schema_seq_no': None,
-                                          'claim_def_seq_no': None}}
+                                          'issuer_did': None}}
     }
     assert proof_input.to_str_dict() == proof_input_serialized
     assert proof_input == ProofInput.from_str_dict(proof_input_serialized)
@@ -262,7 +262,7 @@ async def test_ge_proof_from_to_dict():
             'attr_name': 'age',
             'value': 18,
             'schema_seq_no': None,
-            'claim_def_seq_no': None
+            'issuer_did': None
         }
     }
 
@@ -307,7 +307,7 @@ async def test_primary_proof_from_to_dict():
                     'attr_name': 'age',
                     'value': 18,
                     'schema_seq_no': None,
-                    'claim_def_seq_no': None
+                    'issuer_did': None
                 }
             }
         ]
@@ -360,7 +360,7 @@ async def test_proof_info_from_to_dict():
                             'attr_name': 'age',
                             'value': 18,
                             'schema_seq_no': None,
-                            'claim_def_seq_no': None
+                            'issuer_did': None
                         }
                     }
                 ]

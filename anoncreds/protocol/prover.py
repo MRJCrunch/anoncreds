@@ -107,8 +107,8 @@ class Prover:
         attributes, predicates, timestamps for non-revocation)
         :return: a proof (both primary and non-revocation) and revealed attributes (initial non-encoded values)
         """
-        claims, proofRequest = await self._findClaims(proofInput)
-        proof = await self._prepareProof(claims, proofInput.nonce, proofRequest)
+        claims, requestedProof = await self._findClaims(proofInput)
+        proof = await self._prepareProof(claims, proofInput.nonce, requestedProof)
         return proof
 
     #
@@ -158,8 +158,7 @@ class Prover:
         foundRevealedAttrs = {}
         foundPredicates = {}
         proofClaims = {}
-        scheamsIds = {}
-        pks = {}
+        schemas = {}
         allClaims = await self.wallet.getAllClaims()
 
         async def addProof():
@@ -173,13 +172,12 @@ class Prover:
             proofClaims[schemaId] = proofClaim
 
         for schemaKey, c in allClaims.items():
-            scheamsIds[schemaKey] = (await self.wallet.getSchema(ID(schemaKey))).seqId
-            pks[schemaKey] = (await self.wallet.getPublicKey(ID(schemaKey))).seqId
+            schemas[schemaKey] = (await self.wallet.getSchema(ID(schemaKey)))
 
         for uuid, revealedAttr in revealedAttrs.items():
-            matches = [(scheamsIds[key], c) for key, c in allClaims.items() if revealedAttr.name in c
-                       and (scheamsIds[key] == revealedAttr.schema_seq_no if revealedAttr.schema_seq_no else True)
-                       and (pks[key] == revealedAttr.claim_def_seq_no if revealedAttr.claim_def_seq_no else True)]
+            matches = [(schemas[key].seqId, c) for key, c in allClaims.items() if revealedAttr.name in c
+                       and (schemas[key].seqId == revealedAttr.schema_seq_no if revealedAttr.schema_seq_no else True)
+                       and (schemas[key].issuerId == revealedAttr.issuer_did if revealedAttr.issuer_did else True)]
 
             if len(matches) == 0:
                 raise ValueError("A claim isn't found for the following attributes: {}", revealedAttr.name)
@@ -192,9 +190,9 @@ class Prover:
                 await addProof()
 
         for uuid, predicate in predicates.items():
-            matches = [(scheamsIds[key], c) for key, c in allClaims.items() if predicate.attrName in c
-                       and (scheamsIds[key] == predicate.schema_seq_no if predicate.schema_seq_no else True)
-                       and (pks[key] == predicate.claim_def_seq_no if predicate.claim_def_seq_no else True)]
+            matches = [(schemas[key].seqId, c) for key, c in allClaims.items() if predicate.attrName in c
+                       and (schemas[key].seqId == predicate.schema_seq_no if predicate.schema_seq_no else True)
+                       and (schemas[key].issuerId == predicate.issuer_did if predicate.issuer_did else True)]
 
             if len(matches) == 0:
                 raise ValueError("A claim isn't found for the following predicate: {}", predicate)
@@ -210,7 +208,7 @@ class Prover:
         return proofClaims, requestedProof
 
     async def _prepareProof(self, claims: Dict[SchemaKey, ProofClaims],
-                            nonce, proofRequest) -> FullProof:
+                            nonce, requestedProof) -> FullProof:
         m1Tilde = cmod.integer(cmod.randomBits(LARGE_M2_TILDE))
         initProofs = {}
         CList = []
@@ -264,7 +262,7 @@ class Prover:
 
         aggregatedProof = AggregatedProof(cH, self._prepare_collection(CList))
 
-        return FullProof(proofs, aggregatedProof, proofRequest)
+        return FullProof(proofs, aggregatedProof, requestedProof)
 
     async def _getCList(self, initProofs: Dict[Schema, InitProof]):
         CList = []
