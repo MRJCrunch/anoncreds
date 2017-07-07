@@ -3,7 +3,7 @@ from abc import abstractmethod
 from anoncreds.protocol.repo.public_repo import PublicRepo
 from anoncreds.protocol.types import ID, \
     Claims, ClaimInitDataType, \
-    PrimaryClaim, NonRevocationClaim, ClaimsPair, AttributeValues
+    PrimaryClaim, NonRevocationClaim, ClaimsPair, ClaimAttributeValues
 from anoncreds.protocol.wallet.wallet import Wallet, WalletInMemory
 from typing import Dict, Sequence, Any
 
@@ -15,7 +15,7 @@ class ProverWallet(Wallet):
     # SUBMIT
 
     @abstractmethod
-    async def submitClaimAttributes(self, schemaId: ID, claims: Dict[str, AttributeValues]):
+    async def submitClaimAttributes(self, schemaId: ID, claims: Dict[str, ClaimAttributeValues]):
         raise NotImplementedError
 
     @abstractmethod
@@ -100,7 +100,7 @@ class ProverWalletInMemory(ProverWallet, WalletInMemory):
 
     # SUBMIT
 
-    async def submitClaimAttributes(self, schemaId: ID, claims: Dict[str, AttributeValues]):
+    async def submitClaimAttributes(self, schemaId: ID, claims: Dict[str, ClaimAttributeValues]):
         await self._cacheValueForId(self._claims, schemaId, claims)
 
     async def submitPrimaryClaim(self, schemaId: ID, claim: PrimaryClaim):

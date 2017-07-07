@@ -3,7 +3,7 @@ import pytest
 from anoncreds.protocol.types import PublicKey, Schema, Claims, \
     ProofInput, PredicateGE, FullProof, \
     SchemaKey, ClaimRequest, Proof, AttributeInfo, ProofInfo, AggregatedProof, RequestedProof, PrimaryProof, \
-    PrimaryEqualProof, PrimaryPredicateGEProof, ID, AttributeValues
+    PrimaryEqualProof, PrimaryPredicateGEProof, ID, ClaimAttributeValues
 from anoncreds.protocol.utils import toDictWithStrValues, fromDictWithStrValues
 from config.config import cmod
 
@@ -194,13 +194,13 @@ async def test_requested_proof_from_to_dict(prover1, nonce, claimsProver1Gvt):
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')
 @pytest.mark.asyncio
 async def test_attribute_values_from_to_dict():
-    attr_values = AttributeValues(raw='Alex', encoded=cmod.integer(11))
+    attr_values = ClaimAttributeValues(raw='Alex', encoded=cmod.integer(11))
 
     attr_values_serialized = ['Alex', '11']
 
     assert attr_values.to_str_dict() == attr_values_serialized
-    assert attr_values == AttributeValues.from_str_dict(attr_values_serialized)
-    assert attr_values == AttributeValues.from_str_dict(attr_values.to_str_dict())
+    assert attr_values == ClaimAttributeValues.from_str_dict(attr_values_serialized)
+    assert attr_values == ClaimAttributeValues.from_str_dict(attr_values.to_str_dict())
 
 
 @pytest.mark.skipif('sys.platform == "win32"', reason='SOV-86')

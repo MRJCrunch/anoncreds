@@ -833,10 +833,10 @@ class RequestedProof(namedtuple('RequestedProof', 'revealed_attrs, unrevealed_at
                               self_attested_attrs=self_attested_attrs, predicates=predicates)
 
 
-class AttributeValues(namedtuple('AttributeValues', 'raw, encoded'),
+class ClaimAttributeValues(namedtuple('ClaimAttributeValues', 'raw, encoded'),
                       NamedTupleStrSerializer):
     def __new__(cls, raw=None, encoded=None):
-        return super(AttributeValues, cls).__new__(cls, raw, encoded)
+        return super(ClaimAttributeValues, cls).__new__(cls, raw, encoded)
 
     def to_str_dict(self):
         return [self.raw, str(self.encoded)]
@@ -845,4 +845,4 @@ class AttributeValues(namedtuple('AttributeValues', 'raw, encoded'),
     def from_str_dict(cls, d):
         raw = d[0]
         encoded = int(to_crypto_int(d[1]))
-        return AttributeValues(raw=raw, encoded=encoded)
+        return ClaimAttributeValues(raw=raw, encoded=encoded)

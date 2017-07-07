@@ -8,7 +8,7 @@ from anoncreds.protocol.primary.primary_proof_common import calcTge, calcTeq
 from anoncreds.protocol.types import PrimaryClaim, Predicate, PrimaryInitProof, \
     PrimaryEqualInitProof, PrimaryPrecicateGEInitProof, PrimaryProof, \
     PrimaryEqualProof, PrimaryPredicateGEProof, \
-    ID, ClaimInitDataType, AttributeValues
+    ID, ClaimInitDataType, ClaimAttributeValues
 from anoncreds.protocol.utils import splitRevealedAttrs, fourSquares
 from anoncreds.protocol.wallet.prover_wallet import ProverWallet
 from config.config import cmod
@@ -43,7 +43,7 @@ class PrimaryProofBuilder:
     async def initProof(self, schemaId, c1: PrimaryClaim,
                         revealedAttrs: Sequence[str],
                         predicates: Sequence[Predicate],
-                        m1Tilde, m2Tilde, claimAttributes: Dict[str, AttributeValues]) -> PrimaryInitProof:
+                        m1Tilde, m2Tilde, claimAttributes: Dict[str, ClaimAttributeValues]) -> PrimaryInitProof:
         if not c1:
             return None
 
@@ -72,7 +72,7 @@ class PrimaryProofBuilder:
         return PrimaryProof(eqProof, geProofs)
 
     async def _initEqProof(self, schemaId, c1: PrimaryClaim,
-                           revealedAttrs: Sequence[str], m1Tilde, m2Tilde, claimAttributes: Dict[str, AttributeValues]) \
+                           revealedAttrs: Sequence[str], m1Tilde, m2Tilde, claimAttributes: Dict[str, ClaimAttributeValues]) \
             -> PrimaryEqualInitProof:
         m2Tilde = m2Tilde if m2Tilde else cmod.integer(
             cmod.randomBits(LARGE_MVECT))
@@ -106,7 +106,7 @@ class PrimaryProofBuilder:
                                      unrevealedAttrs.keys(), revealedAttrs)
 
     async def _initGeProof(self, schemaId, eqProof: PrimaryEqualInitProof,
-                           c1: PrimaryClaim, predicate: Predicate, claimAttributes: Dict[str, AttributeValues]) \
+                           c1: PrimaryClaim, predicate: Predicate, claimAttributes: Dict[str, ClaimAttributeValues]) \
             -> PrimaryPrecicateGEInitProof:
         # gen U for Delta
         pk = await self._wallet.getPublicKey(ID(schemaId=schemaId))

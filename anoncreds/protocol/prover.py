@@ -10,7 +10,7 @@ from anoncreds.protocol.revocation.accumulators.non_revocation_proof_builder imp
 from anoncreds.protocol.types import PrimaryClaim, NonRevocationClaim, Proof, \
     InitProof, ProofInput, ProofClaims, \
     FullProof, \
-    Schema, ID, SchemaKey, ClaimRequest, Claims, RequestedProof, AggregatedProof, ProofInfo, AttributeValues
+    Schema, ID, SchemaKey, ClaimRequest, Claims, RequestedProof, AggregatedProof, ProofInfo, ClaimAttributeValues
 from anoncreds.protocol.utils import get_hash_as_int, isCryptoInteger
 from anoncreds.protocol.wallet.prover_wallet import ProverWallet
 from config.config import cmod
@@ -72,7 +72,7 @@ class Prover:
                                                           reqNonRevoc)
         return res
 
-    async def processClaim(self, schemaId: ID, claimAttributes: Dict[str, AttributeValues], signature: Claims):
+    async def processClaim(self, schemaId: ID, claimAttributes: Dict[str, ClaimAttributeValues], signature: Claims):
         """
         Processes and saves a received Claim for the given Schema.
 
