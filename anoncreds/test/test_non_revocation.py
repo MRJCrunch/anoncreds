@@ -86,10 +86,10 @@ async def testUpdateRevocedWitness(claimsProver1Gvt, issuerGvt, schemaGvt,
 async def testInitNonRevocClaim(schemaGvtId, prover1, issuerGvt,
                                 attrsProver1Gvt, keysGvt, issueAccumulatorGvt):
     claimsReq = await prover1.createClaimRequest(schemaGvtId)
-    signature, claims = await issuerGvt.issueClaim(schemaGvtId, claimsReq)
+    claim_signature, claim_attributes = await issuerGvt.issueClaim(schemaGvtId, claimsReq)
 
-    oldV = signature.nonRevocClaim.v
-    await prover1.processClaim(schemaGvtId, claims, signature)
+    oldV = claim_signature.nonRevocClaim.v
+    await prover1.processClaim(schemaGvtId, claim_attributes, claim_signature)
     newC2 = (await prover1.wallet.getClaimSignature(schemaGvtId)).nonRevocClaim
     vrPrime = (
         await prover1.wallet.getNonRevocClaimInitData(schemaGvtId)).vPrime

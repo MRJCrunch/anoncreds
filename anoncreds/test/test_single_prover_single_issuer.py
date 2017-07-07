@@ -138,8 +138,8 @@ async def testUParamShouldBeSame(prover1, verifier, issuerGvt, schemaGvtId,
     claimsReq = await prover1.createClaimRequest(schemaGvtId)
 
     claimsReq = claimsReq._replace(U=claimsReq.U ** 2)
-    signature, claims = await issuerGvt.issueClaim(schemaGvtId, claimsReq)
-    await prover1.processClaim(schemaGvtId, claims, signature)
+    claim_signature, claim_attributes = await issuerGvt.issueClaim(schemaGvtId, claimsReq)
+    await prover1.processClaim(schemaGvtId, claim_attributes, claim_signature)
 
     proofInput = ProofInput(revealedAttrs={'attr_uuid': AttributeInfo(name='name')},
                             predicates={})
@@ -153,7 +153,7 @@ async def testUrParamShouldBeSame(prover1, issuerGvt, schemaGvtId,
     claimsReq = await prover1.createClaimRequest(schemaGvtId)
 
     claimsReq = claimsReq._replace(Ur=claimsReq.Ur ** 2)
-    signature, claims = await issuerGvt.issueClaim(schemaGvtId, claimsReq)
+    claim_signature, claim_attributes = await issuerGvt.issueClaim(schemaGvtId, claimsReq)
 
     with pytest.raises(ValueError):
-        await prover1.processClaim(schemaGvtId, claims, signature)
+        await prover1.processClaim(schemaGvtId, claim_attributes, claim_signature)

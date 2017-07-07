@@ -95,8 +95,8 @@ class Prover:
         definition.
         """
         res = []
-        for schemaId, (signature, claims) in allClaims.items():
-            res.append(await self.processClaim(schemaId, claims, signature))
+        for schemaId, (claim_signature, claim_attributes) in allClaims.items():
+            res.append(await self.processClaim(schemaId, claim_attributes, claim_signature))
         return res
 
     async def presentProof(self, proofInput: ProofInput) -> FullProof:

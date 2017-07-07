@@ -39,9 +39,9 @@ async def testSingleIssuerSingleProver(primes1):
     # 5. request Claims
     prover = Prover(ProverWalletInMemory(userId, publicRepo))
     claimsReq = await prover.createClaimRequest(schemaId)
-    (signature, claims) = await issuer.issueClaim(schemaId, claimsReq)
+    (claim_signature, claim_attributes) = await issuer.issueClaim(schemaId, claimsReq)
 
-    await prover.processClaim(schemaId, claims, signature)
+    await prover.processClaim(schemaId, claim_attributes, claim_signature)
 
     # 6. proof Claims
     verifier = Verifier(WalletInMemory('verifier1', publicRepo))
@@ -91,10 +91,10 @@ async def testMultiplIssuersSingleProver(primes1, primes2):
     prover = Prover(ProverWalletInMemory(userId, publicRepo))
     claimsReq1 = await prover.createClaimRequest(schemaId1)
     claimsReq2 = await prover.createClaimRequest(schemaId2)
-    (signature1, claims1) = await issuer1.issueClaim(schemaId1, claimsReq1)
-    (signature2, claims2) = await issuer2.issueClaim(schemaId2, claimsReq2)
-    await prover.processClaim(schemaId1, claims1, signature1)
-    await prover.processClaim(schemaId2, claims2, signature2)
+    (claim1_signature, claim1_attributes) = await issuer1.issueClaim(schemaId1, claimsReq1)
+    (claim2_signature, claim2_attributes) = await issuer2.issueClaim(schemaId2, claimsReq2)
+    await prover.processClaim(schemaId1, claim1_attributes, claim1_signature)
+    await prover.processClaim(schemaId2, claim2_attributes, claim2_signature)
 
     # 6. proof Claims
     verifier = Verifier(WalletInMemory('verifier1', publicRepo))
@@ -190,8 +190,8 @@ async def testSingleIssuerSingleProverPrimaryOnly(primes1):
     # 5. request Claims
     prover = Prover(ProverWalletInMemory(userId, publicRepo))
     claimsReq = await prover.createClaimRequest(schemaId, None, False)
-    (signature, claims) = await issuer.issueClaim(schemaId, claimsReq)
-    await prover.processClaim(schemaId, claims, signature)
+    (claim_signature, claim_attributes) = await issuer.issueClaim(schemaId, claimsReq)
+    await prover.processClaim(schemaId, claim_attributes, claim_signature)
 
     # 6. proof Claims
     verifier = Verifier(WalletInMemory('verifier1', publicRepo))
