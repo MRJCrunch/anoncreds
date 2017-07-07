@@ -43,16 +43,16 @@ class PrimaryProofBuilder:
     async def initProof(self, schemaId, c1: PrimaryClaim,
                         revealedAttrs: Sequence[str],
                         predicates: Sequence[Predicate],
-                        m1Tilde, m2Tilde, claim: Dict[str, AttributeValues]) -> PrimaryInitProof:
+                        m1Tilde, m2Tilde, claimAttributes: Dict[str, AttributeValues]) -> PrimaryInitProof:
         if not c1:
             return None
 
         eqProof = await self._initEqProof(schemaId, c1, revealedAttrs,
-                                          m1Tilde, m2Tilde, claim)
+                                          m1Tilde, m2Tilde, claimAttributes)
         geProofs = []
         for predicate in predicates:
             geProof = await self._initGeProof(schemaId, eqProof, c1,
-                                              predicate, claim)
+                                              predicate, claimAttributes)
             geProofs.append(geProof)
         return PrimaryInitProof(eqProof, geProofs)
 
@@ -72,11 +72,11 @@ class PrimaryProofBuilder:
         return PrimaryProof(eqProof, geProofs)
 
     async def _initEqProof(self, schemaId, c1: PrimaryClaim,
-                           revealedAttrs: Sequence[str], m1Tilde, m2Tilde, claim: Dict[str, AttributeValues]) \
+                           revealedAttrs: Sequence[str], m1Tilde, m2Tilde, claimAttributes: Dict[str, AttributeValues]) \
             -> PrimaryEqualInitProof:
         m2Tilde = m2Tilde if m2Tilde else cmod.integer(
             cmod.randomBits(LARGE_MVECT))
-        revealedAttrs, unrevealedAttrs = splitRevealedAttrs(claim, [a.name for a in revealedAttrs])
+        revealedAttrs, unrevealedAttrs = splitRevealedAttrs(claimAttributes, [a.name for a in revealedAttrs])
         mtilde = self._getMTilde(unrevealedAttrs)
 
         Ra = cmod.integer(cmod.randomBits(LARGE_VPRIME))
@@ -92,7 +92,7 @@ class PrimaryProofBuilder:
 
         Rur = 1 % pk.N
         for k, value in unrevealedAttrs.items():
-            if k in claim:
+            if k in claimAttributes:
                 Rur = Rur * (pk.R[k] ** mtilde[k])
         Rur *= pk.Rms ** m1Tilde
         Rur *= pk.Rctxt ** m2Tilde
@@ -106,12 +106,12 @@ class PrimaryProofBuilder:
                                      unrevealedAttrs.keys(), revealedAttrs)
 
     async def _initGeProof(self, schemaId, eqProof: PrimaryEqualInitProof,
-                           c1: PrimaryClaim, predicate: Predicate, claim: Dict[str, AttributeValues]) \
+                           c1: PrimaryClaim, predicate: Predicate, claimAttributes: Dict[str, AttributeValues]) \
             -> PrimaryPrecicateGEInitProof:
         # gen U for Delta
         pk = await self._wallet.getPublicKey(ID(schemaId=schemaId))
         k, value = predicate.attrName, predicate.value
-        delta = claim[k].encoded - value
+        delta = claimAttributes[k].encoded - value
         if delta < 0:
             raise ValueError("Predicate is not satisfied")
 
@@ -149,11 +149,11 @@ class PrimaryProofBuilder:
 
         m = {}
 
-        claim = await self._wallet.getClaim(ID(schemaId=schemaId))
+        claimAttributes = await self._wallet.getClaimAttributes(ID(schemaId=schemaId))
 
         for k in initProof.unrevealedAttrs:
             m[str(k)] = initProof.mTilde[str(k)] + (
-                cH * claim[str(k)].encoded)
+                cH * claimAttributes[str(k)].encoded)
         ms = await self._wallet.getMasterSecret(ID(schemaId=schemaId))
         m1 = initProof.m1Tilde + (cH * ms)
         m2 = initProof.m2Tilde + (cH * initProof.c1.m2)

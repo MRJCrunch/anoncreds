@@ -15,7 +15,7 @@ class ProverWallet(Wallet):
     # SUBMIT
 
     @abstractmethod
-    async def submitClaim(self, schemaId: ID, claims: Dict[str, AttributeValues]):
+    async def submitClaimAttributes(self, schemaId: ID, claims: Dict[str, AttributeValues]):
         raise NotImplementedError
 
     @abstractmethod
@@ -52,11 +52,11 @@ class ProverWallet(Wallet):
         raise NotImplementedError
 
     @abstractmethod
-    async def getClaim(self, schemaId: ID) -> Claims:
+    async def getClaimAttributes(self, schemaId: ID) -> Claims:
         raise NotImplementedError
 
     @abstractmethod
-    async def getAllClaims(self) -> ClaimsPair:
+    async def getAllClaimsAttributes(self) -> ClaimsPair:
         raise NotImplementedError
 
     @abstractmethod
@@ -100,7 +100,7 @@ class ProverWalletInMemory(ProverWallet, WalletInMemory):
 
     # SUBMIT
 
-    async def submitClaim(self, schemaId: ID, claims: Dict[str, AttributeValues]):
+    async def submitClaimAttributes(self, schemaId: ID, claims: Dict[str, AttributeValues]):
         await self._cacheValueForId(self._claims, schemaId, claims)
 
     async def submitPrimaryClaim(self, schemaId: ID, claim: PrimaryClaim):
@@ -131,7 +131,7 @@ class ProverWalletInMemory(ProverWallet, WalletInMemory):
     async def getMasterSecret(self, schemaId: ID):
         return await self._getValueForId(self._m1s, schemaId)
 
-    async def getClaim(self, schemaId: ID):
+    async def getClaimAttributes(self, schemaId: ID):
         return await self._getValueForId(self._claims, schemaId)
 
     async def getClaimSignature(self, schemaId: ID) -> Claims:
@@ -140,10 +140,10 @@ class ProverWalletInMemory(ProverWallet, WalletInMemory):
                                                                   schemaId)
         return Claims(c1, c2)
 
-    async def getAllClaims(self) -> ClaimsPair:
+    async def getAllClaimsAttributes(self) -> ClaimsPair:
         res = dict()
         for schemaKey in self._claims.keys():
-            res[schemaKey] = await self.getClaim(ID(schemaKey))
+            res[schemaKey] = await self.getClaimAttributes(ID(schemaKey))
         return res
 
     async def getAllClaimsSignatures(self) -> ClaimsPair:

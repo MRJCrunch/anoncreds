@@ -72,7 +72,7 @@ class Prover:
                                                           reqNonRevoc)
         return res
 
-    async def processClaim(self, schemaId: ID, claims: Dict[str, AttributeValues], signature: Claims):
+    async def processClaim(self, schemaId: ID, claimAttributes: Dict[str, AttributeValues], signature: Claims):
         """
         Processes and saves a received Claim for the given Schema.
 
@@ -81,7 +81,7 @@ class Prover:
         :param claims: claims to be processed and saved
         """
         await self.wallet.submitContextAttr(schemaId, signature.primaryClaim.m2)
-        await self.wallet.submitClaim(schemaId, claims)
+        await self.wallet.submitClaimAttributes(schemaId, claimAttributes)
 
         await self._initPrimaryClaim(schemaId, signature.primaryClaim)
         if signature.nonRevocClaim:
@@ -159,7 +159,7 @@ class Prover:
         foundPredicates = {}
         proofClaims = {}
         schemas = {}
-        allClaims = await self.wallet.getAllClaims()
+        allClaimsAttributes = await self.wallet.getAllClaimsAttributes()
 
         async def addProof():
             revealedAttrsForClaim = [a for a in revealedAttrs.values() if a.name in claim.keys()]
@@ -171,11 +171,11 @@ class Prover:
 
             proofClaims[schemaId] = proofClaim
 
-        for schemaKey, c in allClaims.items():
+        for schemaKey, c in allClaimsAttributes.items():
             schemas[schemaKey] = (await self.wallet.getSchema(ID(schemaKey)))
 
         for uuid, revealedAttr in revealedAttrs.items():
-            matches = [(schemas[key].seqId, c) for key, c in allClaims.items() if revealedAttr.name in c
+            matches = [(schemas[key].seqId, c) for key, c in allClaimsAttributes.items() if revealedAttr.name in c
                        and (schemas[key].seqId == revealedAttr.schema_seq_no if revealedAttr.schema_seq_no else True)
                        and (schemas[key].issuerId == revealedAttr.issuer_did if revealedAttr.issuer_did else True)]
 
@@ -190,7 +190,7 @@ class Prover:
                 await addProof()
 
         for uuid, predicate in predicates.items():
-            matches = [(schemas[key].seqId, c) for key, c in allClaims.items() if predicate.attrName in c
+            matches = [(schemas[key].seqId, c) for key, c in allClaimsAttributes.items() if predicate.attrName in c
                        and (schemas[key].seqId == predicate.schema_seq_no if predicate.schema_seq_no else True)
                        and (schemas[key].issuerId == predicate.issuer_did if predicate.issuer_did else True)]
 
@@ -218,7 +218,7 @@ class Prover:
         for schemaId, val in claims.items():
             c1, c2, revealedAttrs, predicates = val.claims.primaryClaim, val.claims.nonRevocClaim, val.revealedAttrs, val.predicates
 
-            claim = await self.wallet.getClaim(ID(schemaId=schemaId))
+            claim = await self.wallet.getClaimAttributes(ID(schemaId=schemaId))
 
             nonRevocInitProof = None
             if c2:
