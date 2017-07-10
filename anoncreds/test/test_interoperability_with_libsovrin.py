@@ -32,8 +32,12 @@ def main():
         print(data)
         if ('type' in data) & (data['type'] == 'issue'):
             print('in issuer')
-            b = asyncio.ensure_future(issuer_init(primes1(), conn, data['data']['blinded_ms']))
-            loop.run_until_complete(b)
+            # loop = asyncio.get_event_loop()
+            # loop.run_until_complete(issuer_init(primes1(), conn, data['data']['blinded_ms']))
+            # loop.close()
+            future = asyncio.ensure_future(issuer_init(primes1(), conn, data['data']['blinded_ms']))
+            loop.run_until_complete(future)
+            print('!!!!!!!!!after loop!!!!!!!!!!')
             print(data['data'])
             print('sent an answer')
         if (('type' in data) & (data['type'] == 'close')) | (not data):
@@ -46,11 +50,12 @@ async def issuer_init(primes, conn, claim_request):
     publicRepo = PublicRepoInMemory()
     attrRepo = AttributeRepoInMemory()
     issuer = Issuer(IssuerWalletInMemory('issuer1', publicRepo), attrRepo)
-
+    #import pudb;pudb.set_trace()
     # 2. Create a Schema
     schema = await issuer.genSchema('GVT', '1.0', GVT.attribNames())
     schemaId = ID(schema.getKey())
-
+    print('schema')
+    print(schema)
     # 3. Create keys for the Schema
     await issuer.genKeys(schemaId, **primes)
 
@@ -65,19 +70,23 @@ async def issuer_init(primes, conn, claim_request):
     public_key = await issuer.wallet.getPublicKey(schemaId)
     claim_request = ClaimRequest.from_str_dict(claim_request, public_key.N)
     print(claim_request)
-    claims = await issuer.issueClaim(schemaId, claim_request)
-    claims = {
-           'primaryClaim': {
-                'm2': str(crypto_int_to_str(claims.primaryClaim.m2)),
-                'a': str(crypto_int_to_str(claims.primaryClaim.A)),
-                'e': str(claims.primaryClaim.e),
-                'v': str(claims.primaryClaim.v)
-            },
-           'nonRevocClaim': None
-        }
+    print('before issueClaim')
+    (signature, claims) = await issuer.issueClaim(schemaId, claim_request)
+    # claims = {
+    #        'primaryClaim': {
+    #             'm2': str(crypto_int_to_str(claims.primaryClaim.m2)),
+    #             'a': str(crypto_int_to_str(claims.primaryClaim.A)),
+    #             'e': str(claims.primaryClaim.e),
+    #             'v': str(claims.primaryClaim.v)
+    #         },
+    #        'nonRevocClaim': None
+    #     }
 
-    print(claims)
-    conn.send(json.dumps(claims).encode())
+    msg = {
+        'signature': signature.to_str_dict(),
+        'claim': {el: claims[el].to_str_dict() for el in claims}
+    }
+    conn.send(json.dumps(msg).encode())
 
 if __name__ == '__main__':
     main()
