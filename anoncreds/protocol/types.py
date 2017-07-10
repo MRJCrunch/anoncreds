@@ -839,7 +839,7 @@ class ClaimAttributeValues(namedtuple('ClaimAttributeValues', 'raw, encoded'),
         return super(ClaimAttributeValues, cls).__new__(cls, raw, encoded)
 
     def to_str_dict(self):
-        return [self.raw, str(self.encoded)]
+        return [str(self.raw), str(self.encoded)]
 
     @classmethod
     def from_str_dict(cls, d):
