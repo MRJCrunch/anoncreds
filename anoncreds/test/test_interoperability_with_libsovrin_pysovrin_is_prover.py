@@ -6,9 +6,11 @@ import logging
 from anoncreds.protocol.issuer import Issuer
 from anoncreds.protocol.repo.attributes_repo import AttributeRepoInMemory
 from anoncreds.protocol.repo.public_repo import PublicRepoInMemory
-from anoncreds.protocol.types import ID, ClaimRequest
+from anoncreds.protocol.types import ID, ProofRequest
 from anoncreds.protocol.wallet.issuer_wallet import IssuerWalletInMemory
 from anoncreds.test.conftest import GVT, primes1
+from anoncreds.protocol.prover import Prover
+from anoncreds.protocol.wallet.prover_wallet import ProverWalletInMemory
 
 logging.basicConfig(format=u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(asctime)s]  %(message)s',
                     level=logging.DEBUG)
@@ -33,20 +35,20 @@ def main():
         logging.debug('received data: {}'.format(data))
         if ('type' in data) & (data['type'] == 'get_claim_def'):
             logging.debug('get_claim_def -> start')
-            init = asyncio.ensure_future(issuer_init(primes1(), conn))
-            loop.run_until_complete(init)
-            logging.debug('get_claim_def -> done')
-        if ('type' in data) & (data['type'] == 'issue_claim'):
-            logging.debug('issue_claim -> start')
-            future = asyncio.ensure_future(issue_claim(conn, data['data']['blinded_ms']))
+            future = asyncio.ensure_future(init(primes1(), conn))
             loop.run_until_complete(future)
-            logging.debug('issue_claim -> done')
+            logging.debug('get_claim_def -> done')
+        if ('type' in data) & (data['type'] == 'get_proof'):
+            logging.debug('get_proof -> start')
+            future = asyncio.ensure_future(create_proof(conn, data['data']))
+            loop.run_until_complete(future)
+            logging.debug('get_proof -> done')
         if (('type' in data) & (data['type'] == 'close')) | (not data):
             break
 
     sock.close()
 
-async def issuer_init(primes, conn):
+async def init(primes, conn):
     # 1. Init entities
     public_repo = PublicRepoInMemory()
     attr_repo = AttributeRepoInMemory()
@@ -62,19 +64,24 @@ async def issuer_init(primes, conn):
     # 4. Issue accumulator
     await issuer.issueAccumulator(schemaId=schema_id, iA='110', L=5)
 
-    # 4. set attributes for user1
+    # 5. set attributes for user1
     prover_id = 'BzfFCYk'
     attributes = GVT.attribs(name='Alex', age=28, height=175, sex='male')
     attr_repo.addAttributes(schema.getKey(), prover_id, attributes)
 
-    public_key = await issuer.wallet.getPublicKey(schema_id)
+    # 6. request Claims
+    prover = Prover(ProverWalletInMemory(prover_id, public_repo))
+    claims_req = await prover.createClaimRequest(schema_id)
+    (claim_signature, claim_attributes) = await issuer.issueClaim(schema_id, claims_req)
+
+    await prover.processClaim(schema_id, claim_attributes, claim_signature)
 
     global global_dict
-    init_dict = {
-        'schema_id': schema_id,
-        'public_key': public_key,
-        'issuer': issuer
+    global_dict = {
+        'prover': prover
     }
+
+    public_key = await issuer.wallet.getPublicKey(schema_id)
 
     conn.send(json.dumps({
         'primary': public_key.to_str_dict(),
@@ -82,17 +89,11 @@ async def issuer_init(primes, conn):
     }).encode())
 
 
-async def issue_claim(conn, claim_request):
-    claim_request = ClaimRequest.from_str_dict(claim_request, global_dict['public_key'].N)
+async def create_proof(conn, proof_request):
+    proof_request = ProofRequest.from_str_dict(proof_request)
+    proof = await global_dict['prover'].presentProof(proof_request)
 
-    (signature, claims) = await global_dict['issuer'].issueClaim(global_dict['schema_id'], claim_request)
-
-    msg = {
-        'signature': signature.to_str_dict(),
-        'claim': {el: claims[el].to_str_dict() for el in claims}
-    }
-
-    conn.send(json.dumps(msg).encode())
+    conn.send(json.dumps(proof.to_str_dict()).encode())
 
 if __name__ == '__main__':
     main()

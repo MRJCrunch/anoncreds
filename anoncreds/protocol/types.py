@@ -280,8 +280,8 @@ class Predicate(namedtuple('Predicate', 'attrName, value, type, schema_seq_no, i
         attrName = d['attr_name']
         value = d['value']
         type = d['p_type']
-        schema_seq_no = int(d['schema_seq_no']) if d['schema_seq_no'] else None
-        issuer_did = int(d['issuer_did']) if d['issuer_did'] else None
+        schema_seq_no = int(d['schema_seq_no']) if (('schema_seq_no' in d) and d['schema_seq_no']) else None
+        issuer_did = int(d['issuer_did']) if (('issuer_did' in d) and d['issuer_did']) else None
         return PredicateGE(attrName=attrName, value=value, type=type,
                          schema_seq_no=schema_seq_no, issuer_did=issuer_did)
 
@@ -445,7 +445,7 @@ class AttributeInfo(
     @classmethod
     def from_str_dict(cls, d):
         schema_seq_no = int(d['schema_seq_no']) if d['schema_seq_no'] else None
-        issuer_did = int(d['issuer_did']) if d['issuer_did'] else None
+        issuer_did = int(d['issuer_did']) if (('issuer_did' in d) and d['issuer_did']) else None
         name = d['name']
         return AttributeInfo(name, schema_seq_no, issuer_did)
 
