@@ -70,7 +70,7 @@ async def issuer_init(primes, conn):
     public_key = await issuer.wallet.getPublicKey(schema_id)
 
     global global_dict
-    init_dict = {
+    global_dict = {
         'schema_id': schema_id,
         'public_key': public_key,
         'issuer': issuer
