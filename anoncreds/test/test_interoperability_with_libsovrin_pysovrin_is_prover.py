@@ -71,7 +71,7 @@ async def init(primes, conn):
 
     # 6. request Claims
     prover = Prover(ProverWalletInMemory(prover_id, public_repo))
-    claims_req = await prover.createClaimRequest(schema_id)
+    claims_req = await prover.createClaimRequest(schema_id, reqNonRevoc=False)
     (claim_signature, claim_attributes) = await issuer.issueClaim(schema_id, claims_req)
 
     await prover.processClaim(schema_id, claim_attributes, claim_signature)
