@@ -288,7 +288,7 @@ class Predicate(namedtuple('Predicate', 'attrName, value, type, schema_seq_no, i
 
 # TODO: now we consdider only  >= predicate. Support other types of predicates
 class PredicateGE(Predicate):
-    def __new__(cls, attrName, value, type='ge', schema_seq_no=None, issuer_did=None):
+    def __new__(cls, attrName, value, type='GE', schema_seq_no=None, issuer_did=None):
         return super(PredicateGE, cls).__new__(cls, attrName, value, type, schema_seq_no, issuer_did)
 
 
@@ -753,7 +753,7 @@ class FullProof(namedtuple('FullProof', 'proofs, aggregatedProof, requestedProof
     def from_str_dict(cls, d, n):
         aggregatedProof = AggregatedProof.from_str_dict(d['aggregated_proof'])
         requestedProof = RequestedProof.from_str_dict(d['requested_proof'])
-        proofs = {k: Proof.from_str_dict(v['proof'], n) for k, v in d['proofs']}
+        proofs = {k: ProofInfo.from_str_dict(v, n) for k, v in d['proofs'].items()}
 
         return FullProof(aggregatedProof=aggregatedProof, requestedProof=requestedProof, proofs=proofs)
 

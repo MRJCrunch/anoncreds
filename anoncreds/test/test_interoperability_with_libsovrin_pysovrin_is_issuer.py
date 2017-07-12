@@ -17,6 +17,7 @@ loop = asyncio.get_event_loop()
 init_dict = {}
 ip = '127.0.0.1'
 port = 1234
+chunk_size = 102400
 
 
 def main():
@@ -28,7 +29,7 @@ def main():
     logging.debug('Connected')
 
     while True:
-        data = json.loads(conn.recv(10240).decode("utf-8"))
+        data = json.loads(conn.recv(chunk_size).decode("utf-8"))
         logging.debug('received data: {}'.format(data))
         if ('type' in data) & (data['type'] == 'get_claim_def'):
             logging.debug('get_claim_def -> start')
