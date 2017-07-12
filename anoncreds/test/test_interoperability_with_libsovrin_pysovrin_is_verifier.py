@@ -29,6 +29,7 @@ chunk_size = 102400
 
 def main():
     sock = socket.socket()
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind((ip, port))
     sock.listen(1)
     logging.debug('Listening')
