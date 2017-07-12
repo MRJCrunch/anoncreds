@@ -753,7 +753,7 @@ class FullProof(namedtuple('FullProof', 'proofs, aggregatedProof, requestedProof
     def from_str_dict(cls, d, n):
         aggregatedProof = AggregatedProof.from_str_dict(d['aggregated_proof'])
         requestedProof = RequestedProof.from_str_dict(d['requested_proof'])
-        proofs = {k: ProofInfo.from_str_dict(v, n) for k, v in d['proofs'].items()}
+        proofs = {item[0]: ProofInfo.from_str_dict(item[1], n[i]) for i, item in enumerate(d['proofs'].items())}
 
         return FullProof(aggregatedProof=aggregatedProof, requestedProof=requestedProof, proofs=proofs)
 

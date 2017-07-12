@@ -92,7 +92,7 @@ async def create_proof_request(conn):
     conn.send(json.dumps(proof_request.to_str_dict()).encode())
 
 async def verify(proof, conn):
-    proof = FullProof.from_str_dict(proof, global_dict['public_key'].N)
+    proof = FullProof.from_str_dict(proof, [global_dict['public_key'].N])
 
     assert proof.requestedProof.revealed_attrs['attr_uuid'][1] == 'Alex'
     valid = await global_dict['verifier'].verify(global_dict['proof_request'], proof)
