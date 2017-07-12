@@ -449,41 +449,6 @@ class AttributeInfo(
         name = d['name']
         return AttributeInfo(name, schema_seq_no, issuer_did)
 
-    def to_str_dict(self):
-        return {
-            'nonce': str(self.nonce),
-            'revealedAttrs': {k: v.to_str_dict() for k, v in self.revealedAttrs.items()},
-            'predicates': {k: v.to_str_dict() for k, v in self.predicates.items()}
-        }
-
-    @classmethod
-    def from_str_dict(cls, d):
-        nonce = int(d['nonce'])
-        revealedAttrs = {k: AttributeInfo.from_str_dict(v) for k, v in d['revealedAttrs'].items()}
-        predicates = {k: Predicate.from_str_dict(v) for k, v in d['predicates'].items()}
-        return ProofInput(nonce=nonce, revealedAttrs=revealedAttrs, predicates=predicates)
-
-
-class AttributeInfo(
-    namedtuple('ProofInput', 'name, schema_seq_no, issuer_did'),
-    NamedTupleStrSerializer):
-    def __new__(cls, name=None, schema_seq_no=None, issuer_did=None):
-        return super(AttributeInfo, cls).__new__(cls, name, schema_seq_no, issuer_did)
-
-    def to_str_dict(self):
-        return {
-            'name': self.name,
-            'schema_seq_no': self.schema_seq_no,
-            'issuer_did': self.issuer_did
-        }
-
-    @classmethod
-    def from_str_dict(cls, d):
-        schema_seq_no = int(d['schema_seq_no']) if d['schema_seq_no'] else None
-        issuer_did = int(d['issuer_did']) if d['issuer_did'] else None
-        name = d['name']
-        return AttributeInfo(name, schema_seq_no, issuer_did)
-
 
 class ProofClaims(
     namedtuple('ProofClaims', 'claims, revealedAttrs, predicates')):
